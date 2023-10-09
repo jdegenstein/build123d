@@ -1219,23 +1219,50 @@ class Rotation(Location):
     """Subclass of Location used only for object rotation
 
     Attributes:
-        about_x (float): rotation in degrees about X axis
-        about_y (float): rotation in degrees about Y axis
-        about_z (float): rotation in degrees about Z axis
-
+        about_a (float): first rotation in degrees (by default about X axis)
+        about_b (float): second rotation in degrees (by default about Y axis)
+        about_c (float): third rotation in degrees (by default about Z axis)
+        ordering (enum): order of rotations in RotationOrder enum
     """
 
-    def __init__(self, about_x: float = 0, about_y: float = 0, about_z: float = 0):
-        self.about_x = about_x
-        self.about_y = about_y
-        self.about_z = about_z
+    def __init__(
+        self,
+        about_a: float = 0,
+        about_b: float = 0,
+        about_c: float = 0,
+        ordering: RotationOrder = RotationOrder.XYZ
+    ):
+        self.about_a = about_a
+        self.about_b = about_b
+        self.about_c = about_c
+        self.ordering = ordering
 
+        dict = {
+            RotationOrder.XYZ: gp_EulerSequence.gp_Intrinsic_XYZ,
+            RotationOrder.XZY: gp_EulerSequence.gp_Intrinsic_XZY,
+            RotationOrder.YZX: gp_EulerSequence.gp_Intrinsic_YZX,
+            RotationOrder.YXZ: gp_EulerSequence.gp_Intrinsic_YXZ,
+            RotationOrder.ZXY: gp_EulerSequence.gp_Intrinsic_ZXY,
+            RotationOrder.ZYX: gp_EulerSequence.gp_Intrinsic_ZYX,
+            RotationOrder.XYX: gp_EulerSequence.gp_Intrinsic_XYX,
+            RotationOrder.XZX: gp_EulerSequence.gp_Intrinsic_XZX,
+            RotationOrder.YZY: gp_EulerSequence.gp_Intrinsic_YZY,
+            RotationOrder.YXY: gp_EulerSequence.gp_Intrinsic_YXY,
+            RotationOrder.ZXZ: gp_EulerSequence.gp_Intrinsic_ZXZ,
+            RotationOrder.ZYZ: gp_EulerSequence.gp_Intrinsic_ZYZ,
+        }
+        
+        if ordering in dict:
+            euler_seq = dict[ordering]
+        else:
+            raise ValueError(f"Invalid rotation order: {ordering}")
+            
         quaternion = gp_Quaternion()
         quaternion.SetEulerAngles(
-            gp_EulerSequence.gp_Intrinsic_XYZ,
-            radians(about_x),
-            radians(about_y),
-            radians(about_z),
+            euler_seq,
+            radians(about_a),
+            radians(about_b),
+            radians(about_c),
         )
         transformation = gp_Trsf()
         transformation.SetRotationPart(quaternion)
