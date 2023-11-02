@@ -11,7 +11,7 @@ They are organized from simple to complex, so working through them in order is t
     Some important lines are omitted below to save space, so you will most likely need to add 1 & 2 or 3 to the provided code below for them to work:
 
        1. ``from build123d import *``
-       2. If you are using Build123d *context mode*,
+       2. If you are using Build123d *builder mode*,
 
             - in *CQ-editor* add e.g. ``show_object(ex15.part)``, ``show_object(ex15.sketch)`` or ``show_object(ex15.line)`` to view parts, sketches or lines.
             - in *ocp_vscode* simply use e.g. ``show_object(ex15)`` for parts, sketches and curves.
@@ -89,7 +89,7 @@ Build a prismatic solid using extrusion.
 * **Builder mode**
 
     This time we can first create a 2D :class:`~build_sketch.BuildSketch` adding a
-    :class:`~objects_sketch.Circle` and a subtracted :class:`~objects_sketch.Rectangle``
+    :class:`~objects_sketch.Circle` and a subtracted :class:`~objects_sketch.Rectangle`
     and then use :class:`~build_part.BuildPart`'s :meth:`~operations_part.extrude` feature.
 
     .. literalinclude:: general_examples.py
@@ -99,7 +99,7 @@ Build a prismatic solid using extrusion.
 * **Algebra mode**
 
     This time we can first create a 2D :class:`~objects_sketch.Circle` with a subtracted
-    :class:`~objects_sketch.Rectangle`` and then use the :meth:`~operations_part.extrude` operation for parts.
+    :class:`~objects_sketch.Rectangle` and then use the :meth:`~operations_part.extrude` operation for parts.
 
     .. literalinclude:: general_examples_algebra.py
         :start-after: [Ex. 3]
@@ -437,7 +437,7 @@ consuming, and more difficult to maintain.
 
     The :meth:`~operations_generic.sweep` method takes any pending faces and sweeps them through the provided
     path (in this case the path is taken from the pending edges from ``ex14_ln``).
-    :meth:`~operations_part.revolve` requires a single connected wire. The pending faces must lie on the
+    :meth:`~operations_generic.sweep`requires a single connected wire. The pending faces must lie on the
     path.
 
     .. literalinclude:: general_examples.py
