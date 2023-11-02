@@ -437,7 +437,7 @@ consuming, and more difficult to maintain.
 
     The :meth:`~operations_generic.sweep` method takes any pending faces and sweeps them through the provided
     path (in this case the path is taken from the pending edges from ``ex14_ln``).
-    :meth:`~operations_generic.sweep`requires a single connected wire. The pending faces must lie on the
+    :meth:`~operations_generic.sweep` requires a single connected wire. The pending faces must lie on the
     path.
 
     .. literalinclude:: general_examples.py
