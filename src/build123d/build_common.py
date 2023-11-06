@@ -905,7 +905,12 @@ class PolarLocations(LocationList):
         if count < 1:
             raise ValueError(f"At least 1 elements required, requested {count}")
 
-        angle_step = angular_range / count
+        if angular_range % 360 == 0:
+            angle_step = angular_range / count
+        elif count > 1:
+            angle_step = angular_range / (count - 1)
+        else:
+            angle_step = angular_range
 
         # Note: rotate==False==0 so the location orientation doesn't change
         local_locations = []
