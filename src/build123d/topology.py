@@ -1395,6 +1395,8 @@ class Shape(NodeMixin):
 
     _dim = None
 
+    delattr(NodeMixin, "height")
+
     def __init__(
         self,
         obj: TopoDS_Shape = None,
