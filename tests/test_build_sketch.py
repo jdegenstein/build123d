@@ -226,7 +226,7 @@ class TestBuildSketchObjects(unittest.TestCase):
         with BuildSketch() as test:
             r = Rectangle(20, 10)
         self.assertEqual(r.width, 20)
-        self.assertEqual(r.rectangle_height, 10)
+        self.assertEqual(r.height, 10)
         self.assertEqual(r.rotation, 0)
         self.assertEqual(r.align, (Align.CENTER, Align.CENTER))
         self.assertEqual(r.mode, Mode.ADD)
@@ -237,7 +237,7 @@ class TestBuildSketchObjects(unittest.TestCase):
         with BuildSketch() as test:
             r = RectangleRounded(20, 10, 1)
         self.assertEqual(r.width, 20)
-        self.assertEqual(r.rectangle_height, 10)
+        self.assertEqual(r.height, 10)
         self.assertEqual(r.rotation, 0)
         self.assertEqual(r.radius, 1)
         self.assertEqual(r.align, (Align.CENTER, Align.CENTER))
