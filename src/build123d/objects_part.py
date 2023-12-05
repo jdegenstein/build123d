@@ -144,7 +144,7 @@ class Box(BasePartObject):
 
         self.length = length
         self.width = width
-        self.box_height = height
+        self.height = height
 
         solid = Solid.make_box(length, width, height)
 
