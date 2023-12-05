@@ -217,7 +217,7 @@ class Rectangle(BaseSketchObject):
         validate_inputs(context, self)
 
         self.width = width
-        self.rectangle_height = height
+        self.height = height
         self.align = tuplify(align, 2)
 
         face = Face.make_rect(height, width)
