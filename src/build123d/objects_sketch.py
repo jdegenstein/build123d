@@ -256,7 +256,7 @@ class RectangleRounded(BaseSketchObject):
         if width <= 2 * radius or height <= 2 * radius:
             raise ValueError("width and height must be > 2*radius")
         self.width = width
-        self.rectangle_height = height
+        self.height = height
         self.radius = radius
         self.align = tuplify(align, 2)
 
