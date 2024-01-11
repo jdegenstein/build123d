@@ -40,7 +40,7 @@ import os
 import platform
 import sys
 import warnings
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from io import BytesIO
 from itertools import combinations
 from math import radians, inf, pi, sin, cos, tan, copysign, ceil, floor
@@ -48,6 +48,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Generic,
     Iterable,
     Iterator,
     Optional,
@@ -884,7 +885,7 @@ class Mixin1D:
                 self1 = line.position_at(1)
                 end0 = offset_wire.position_at(0)
                 end1 = offset_wire.position_at(1)
-                if (self0 - end0).length - distance <= TOLERANCE:
+                if (self0 - end0).length - abs(distance) <= TOLERANCE:
                     edge0 = Edge.make_line(self0, end0)
                     edge1 = Edge.make_line(self1, end1)
                 else:
@@ -1693,11 +1694,13 @@ class Shape(NodeMixin):
         """cut shape from self operator -"""
         others = other if isinstance(other, (list, tuple)) else [other]
 
-        if not all([type(other)._dim == type(self)._dim for other in others]):
-            raise ValueError(
-                f"Only shapes with the same dimension can be subtracted "
-                f"not {type(self).__name__} and {type(other).__name__}"
-            )
+        for _other in others:
+            if type(_other)._dim < type(self)._dim:
+                raise ValueError(
+                    f"Only shapes with equal or greater dimension can be subtracted: "
+                    f"not {type(self).__name__} ({type(self)._dim}D) and "
+                    f"{type(_other).__name__} ({type(_other)._dim}D)"
+                )
 
         new_shape = None
         if self.wrapped is None:
@@ -3250,9 +3253,21 @@ class Shape(NodeMixin):
         return (visible_edges, hidden_edges)
 
 
+class Comparable(metaclass=ABCMeta):
+    """Abstract base class that requires comparison methods"""
+
+    @abstractmethod
+    def __lt__(self, other: Any) -> bool:
+        ...
+
+    @abstractmethod
+    def __eq__(self, other: Any) -> bool:
+        ...
+
+
 # This TypeVar allows IDEs to see the type of objects within the ShapeList
 T = TypeVar("T", bound=Union[Shape, Vector])
-K = TypeVar("K")
+K = TypeVar("K", bound=Comparable)
 
 
 class ShapePredicate(Protocol):
@@ -3721,12 +3736,12 @@ class ShapeList(list[T]):
         return return_value
 
 
-class GroupBy:
+class GroupBy(Generic[T, K]):
     """Result of a Shape.groupby operation. Groups can be accessed by index or key"""
 
     def __init__(
         self,
-        key_f: Callable[[Shape], K],
+        key_f: Callable[[T], K],
         shapelist: Iterable[T],
         *,
         reverse: bool = False,
@@ -3758,7 +3773,7 @@ class GroupBy:
                 return self.groups[i]
         raise KeyError(key)
 
-    def group_for(self, shape: Shape):
+    def group_for(self, shape: T):
         """Select group by shape"""
         return self.group(self.key_f(shape))
 
