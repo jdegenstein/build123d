@@ -169,7 +169,6 @@ from OCP.GeomAPI import (
     GeomAPI_ProjectPointOnSurf,
     GeomAPI_ProjectPointOnCurve,
 )
-global resZZ
 from OCP.GeomFill import (
     GeomFill_CorrectedFrenet,
     GeomFill_Frenet,
