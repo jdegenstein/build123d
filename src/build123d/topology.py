@@ -169,6 +169,7 @@ from OCP.GeomAPI import (
     GeomAPI_ProjectPointOnSurf,
     GeomAPI_ProjectPointOnCurve,
 )
+global resZZ
 from OCP.GeomFill import (
     GeomFill_CorrectedFrenet,
     GeomFill_Frenet,
@@ -2102,22 +2103,23 @@ class Shape(NodeMixin):
         return list(out.values())
 
     def _entities_from(
-        self, child_type: Shapes, parent_type: Shapes
+        self, child_type: Shape, parent_type: Shape
     ) -> Dict[Shape, list[Shape]]:
         res = TopTools_IndexedDataMapOfShapeListOfShape()
 
         TopExp.MapShapesAndAncestors_s(
             self.wrapped,
-            inverse_shape_LUT[child_type],
-            inverse_shape_LUT[parent_type],
+            inverse_shape_LUT[child_type.__name__],
+            inverse_shape_LUT[parent_type.__name__],
             res,
         )
 
-        out: Dict[Shape, list[Shape]] = {}
-        for i in range(1, res.Extent() + 1):
-            out[Shape.cast(res.FindKey(i))] = [
-                Shape.cast(el) for el in res.FindFromIndex(i)
-            ]
+        children = [e for e in self.shapes() if isinstance(e, child_type)]
+
+        out: Dict[Shape, list[Shape]] = {
+            children[idx]: [Shape.cast(el) for el in parents]
+            for idx, parents in enumerate(res)
+            }
 
         return out
 
@@ -2216,6 +2218,17 @@ class Shape(NodeMixin):
         if shell_count != 1:
             warnings.warn(f"Found {shell_count} shells, returning first")
         return shells[0]
+    
+    def shapes(self) -> ShapeList[Shape]:
+        return ShapeList([
+            *self.vertices(),
+            *self.edges(),
+            *self.wires(),
+            *self.faces(),
+            *self.shells(),
+            *self.solids(),
+            *self.compounds(),
+        ])
 
     def solids(self) -> ShapeList[Solid]:
         """solids - all the solids in this Shape"""
@@ -5594,7 +5607,7 @@ class Face(Shape):
         """
 
         chamfer_builder = BRepFilletAPI_MakeFillet2d(self.wrapped)
-        edge_map = self._entities_from(Vertex.__name__, Edge.__name__)
+        edge_map = self._entities_from(Vertex, Edge)
 
         for vertex in vertices:
             edges = edge_map[vertex]
