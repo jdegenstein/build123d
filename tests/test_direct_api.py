@@ -124,7 +124,7 @@ class DirectApiTestCase(unittest.TestCase):
             first.Z,
         )
         firste = gp_Trsf()
-        firste.SetTransformation(firstq)
+        firste.SetRotation(firstq)
         firstrot = firste.GetRotation()
         first_vector = Vector(math.degrees(a) for a in firstrot.GetEulerAngles(gp_EulerSequence.gp_Intrinsic_XYZ))
         
@@ -138,7 +138,7 @@ class DirectApiTestCase(unittest.TestCase):
             second_vec_in.Z,
         )
         seconde = gp_Trsf()
-        seconde.SetTransformation(secondq)
+        seconde.SetRotation(secondq)
         secondrot = seconde.GetRotation()
         second_vector = Vector(math.degrees(a) for a in secondrot.GetEulerAngles(gp_EulerSequence.gp_Intrinsic_XYZ))
 
