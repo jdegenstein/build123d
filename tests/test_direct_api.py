@@ -111,6 +111,41 @@ class DirectApiTestCase(unittest.TestCase):
         self.assertAlmostEqual(first.Y, second_vector.Y, places, msg=msg)
         self.assertAlmostEqual(first.Z, second_vector.Z, places, msg=msg)
 
+    def assertOrientationVectorAlmostEquals(
+        self, first: Vector, second: VectorLike, places: int, msg: Optional[str] = None
+    ):
+        """ uses quaternions internally to compare orientation vector of both inputs """
+
+        firstq = gp_Quaternion()
+        firstq.SetEulerAngles(
+            gp_EulerSequence.gp_Intrinsic_XYZ,
+            first.X,
+            first.Y,
+            first.Z,
+        )
+        firste = gp_Trsf()
+        firste.SetTransformation(firstq)
+        firstrot = firste.GetRotation()
+        first_vector = Vector(math.degrees(a) for a in firstrot.GetEulerAngles(gp_EulerSequence.gp_Intrinsic_XYZ))
+        
+        second_vec_in = Vector(second)
+
+        secondq = gp_Quaternion()
+        secondq.SetEulerAngles(
+            gp_EulerSequence.gp_Intrinsic_XYZ,
+            second_vec_in.X,
+            second_vec_in.Y,
+            second_vec_in.Z,
+        )
+        seconde = gp_Trsf()
+        seconde.SetTransformation(secondq)
+        secondrot = seconde.GetRotation()
+        second_vector = Vector(math.degrees(a) for a in secondrot.GetEulerAngles(gp_EulerSequence.gp_Intrinsic_XYZ))
+
+        
+        self.assertAlmostEqual(first_vector.X, second_vector.X, places, msg=msg)
+        self.assertAlmostEqual(first_vector.Y, second_vector.Y, places, msg=msg)
+        self.assertAlmostEqual(first_vector.Z, second_vector.Z, places, msg=msg)
 
 class TestAssembly(unittest.TestCase):
     @staticmethod
@@ -1592,7 +1627,7 @@ class TestLocation(DirectApiTestCase):
         loc = Location((1, 2, 3), (0, 35, 127))
         n_loc = -loc
         self.assertVectorAlmostEquals(n_loc.position, (1, 2, 3), 5)
-        self.assertVectorAlmostEquals(n_loc.orientation, (180, -35, -127), 5)
+        self.assertOrientationVectorAlmostEquals(n_loc.orientation, (180, -35, -127), 5)
 
     def test_mult_iterable(self):
         locs = Location((1, 2, 0)) * GridLocations(4, 4, 2, 1)
