@@ -2245,7 +2245,7 @@ class Shape(NodeMixin):
         if self.solids():
             return Shape.compute_mass(self)
         else:
-            return None
+            return 0.0
 
     def _apply_transform(self, transformation: gp_Trsf) -> Self:
         """Private Apply Transform
