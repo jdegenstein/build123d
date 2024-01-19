@@ -2242,7 +2242,10 @@ class Shape(NodeMixin):
     def volume(self) -> float:
         """volume - the volume of this Shape"""
         # when density == 1, mass == volume
-        return Shape.compute_mass(self)
+        if self.solids():
+            return Shape.compute_mass(self)
+        else:
+            return None
 
     def _apply_transform(self, transformation: gp_Trsf) -> Self:
         """Private Apply Transform
