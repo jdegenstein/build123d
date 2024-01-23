@@ -1,6 +1,6 @@
 name: tests
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 jobs:
 
   tests:
@@ -12,7 +12,7 @@ jobs:
           "3.10",
           #"3.11"
           ]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest, flyci-macos-large-latest-m1]
 
     runs-on: ${{ matrix.os }}
     steps:
