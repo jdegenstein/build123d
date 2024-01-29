@@ -119,9 +119,9 @@ class DirectApiTestCase(unittest.TestCase):
         firstq = gp_Quaternion()
         firstq.SetEulerAngles(
             gp_EulerSequence.gp_Intrinsic_XYZ,
-            first.X,
-            first.Y,
-            first.Z,
+            first.X * DEG2RAD,
+            first.Y * DEG2RAD,
+            first.Z * DEG2RAD,
         )
         firste = gp_Trsf()
         firste.SetRotation(firstq)
@@ -133,9 +133,9 @@ class DirectApiTestCase(unittest.TestCase):
         secondq = gp_Quaternion()
         secondq.SetEulerAngles(
             gp_EulerSequence.gp_Intrinsic_XYZ,
-            second_vec_in.X,
-            second_vec_in.Y,
-            second_vec_in.Z,
+            second_vec_in.X * DEG2RAD,
+            second_vec_in.Y * DEG2RAD,
+            second_vec_in.Z * DEG2RAD,
         )
         seconde = gp_Trsf()
         seconde.SetRotation(secondq)
