@@ -1836,9 +1836,10 @@ class Plane(metaclass=PlaneMeta):
             topo_face.Move(arg_location.wrapped)
             self._origin = arg_location.position
             self.x_dir = Vector(BRep_Tool.Surface_s(topo_face).Position().XDirection())
-            self.x_dir = Vector(round(i,18) for i in self.x_dir)
-            self.z_dir = Plane.get_topods_face_normal(topo_face)
-            self.z_dir = Vector(round(i,18) for i in self.z_dir)
+            self.x_dir = Vector(round(i,24) for i in self.x_dir)
+            # self.z_dir = Plane.get_topods_face_normal(topo_face)
+            self.z_dir = Vector(BRep_Tool.Surface_s(topo_face).Position().Direction())
+            self.z_dir = Vector(round(i,24) for i in self.z_dir)
         elif arg_origin:
             self._origin = Vector(arg_origin)
             self.x_dir = Vector(arg_x_dir) if arg_x_dir else None
