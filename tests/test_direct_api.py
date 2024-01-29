@@ -142,10 +142,10 @@ class DirectApiTestCase(unittest.TestCase):
         secondrot = seconde.GetRotation()
         second_vector = Vector(math.degrees(a) for a in secondrot.GetEulerAngles(gp_EulerSequence.gp_Intrinsic_XYZ))
 
-        
-        self.assertAlmostEqual(first_vector.X, second_vector.X, places, msg=msg)
-        self.assertAlmostEqual(first_vector.Y, second_vector.Y, places, msg=msg)
-        self.assertAlmostEqual(first_vector.Z, second_vector.Z, places, msg=msg)
+        self.assertTupleAlmostEquals(first_vector.to_tuple(), second_vector.to_tuple(), places=places, msg=msg)
+        # self.assertAlmostEqual(first_vector.X, second_vector.X, places, msg=msg)
+        # self.assertAlmostEqual(first_vector.Y, second_vector.Y, places, msg=msg)
+        # self.assertAlmostEqual(first_vector.Z, second_vector.Z, places, msg=msg)
 
 class TestAssembly(unittest.TestCase):
     @staticmethod
