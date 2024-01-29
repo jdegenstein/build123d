@@ -1592,7 +1592,7 @@ class TestLocation(DirectApiTestCase):
         loc = Location((1, 2, 3), (0, 35, 127))
         n_loc = -loc
         self.assertVectorAlmostEquals(n_loc.position, (1, 2, 3), 5)
-        self.assertVectorAlmostEquals(n_loc.orientation, (-180, -35, -127), 5)
+        self.assertVectorAlmostEquals(n_loc.orientation, (180, -35, -127), 5)
 
     def test_mult_iterable(self):
         locs = Location((1, 2, 0)) * GridLocations(4, 4, 2, 1)
