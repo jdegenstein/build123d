@@ -25,6 +25,7 @@ license:
     limitations under the License.
 
 """
+
 import unittest
 from math import sqrt, pi
 from build123d import *
@@ -106,6 +107,47 @@ class BuildLineTests(unittest.TestCase):
             Bezier(*pts, weights=wts)
         self.assertAlmostEqual(bz.wires()[0].length, 225.86389406824566, 5)
 
+    def test_double_tangent_arc(self):
+        l1 = Line((10, 0), (30, 20))
+        l2 = DoubleTangentArc((0, 5), (1, 0), l1)
+        _, p1, p2 = l1.distance_to_with_closest_points(l2)
+        self.assertTupleAlmostEquals(tuple(p1), tuple(p2), 5)
+        self.assertTupleAlmostEquals(
+            tuple(l1.tangent_at(p1)), tuple(l2.tangent_at(p2)), 5
+        )
+
+        l3 = Line((10, 0), (20, -10))
+        l4 = DoubleTangentArc((0, 0), (1, 0), l3)
+        _, p1, p2 = l3.distance_to_with_closest_points(l4)
+        self.assertTupleAlmostEquals(tuple(p1), tuple(p2), 5)
+        self.assertTupleAlmostEquals(
+            tuple(l3.tangent_at(p1)), tuple(l4.tangent_at(p2)), 5
+        )
+
+        with BuildLine() as test:
+            l5 = Polyline((20, -10), (10, 0), (20, 10))
+            l6 = DoubleTangentArc((0, 0), (1, 0), l5, keep=Keep.BOTTOM)
+        _, p1, p2 = l5.distance_to_with_closest_points(l6)
+        self.assertTupleAlmostEquals(tuple(p1), tuple(p2), 5)
+        self.assertTupleAlmostEquals(
+            tuple(l5.tangent_at(p1)), tuple(l6.tangent_at(p2) * -1), 5
+        )
+
+        l7 = Spline((15, 5), (5, 0), (15, -5), tangents=[(-1, 0), (1, 0)])
+        l8 = DoubleTangentArc((0, 0, 0), (1, 0, 0), l7, keep=Keep.BOTH)
+        self.assertEqual(len(l8.edges()), 2)
+
+        l9 = EllipticalCenterArc((15, 0), 10, 5, start_angle=90, end_angle=270)
+        l10 = DoubleTangentArc((0, 0, 0), (1, 0, 0), l9, keep=Keep.BOTH)
+        self.assertEqual(len(l10.edges()), 2)
+
+        with self.assertRaises(ValueError):
+            DoubleTangentArc((0, 0, 0), (0, 0, 1), l9)
+
+        l11 = Line((10, 0), (20, 0))
+        with self.assertRaises(RuntimeError):
+            DoubleTangentArc((0, 0, 0), (1, 0, 0), l11)
+
     def test_elliptical_start_arc(self):
         with self.assertRaises(RuntimeError):
             with BuildLine():
@@ -145,7 +187,7 @@ class BuildLineTests(unittest.TestCase):
         self.assertEqual(len(p.edges().filter_by(GeomType.LINE)), 4)
 
         with self.assertRaises(ValueError):
-            FilletPolyline((0, 0), (1, 0), radius=0.1)
+            FilletPolyline((0, 0), radius=0.1)
         with self.assertRaises(ValueError):
             FilletPolyline((0, 0), (1, 0), (1, 1), radius=-1)
 
@@ -170,7 +212,7 @@ class BuildLineTests(unittest.TestCase):
         with BuildLine() as l:
             l1 = JernArc(start=(0, 0, 0), tangent=(1, 0, 0), radius=1, arc_size=360)
         self.assertTrue(l1.is_closed)
-        circle_face = Face.make_from_wires(l1)
+        circle_face = Face(l1)
         self.assertAlmostEqual(circle_face.area, pi, 5)
         self.assertTupleAlmostEquals(circle_face.center().to_tuple(), (0, 1, 0), 5)
 
@@ -260,14 +302,14 @@ class BuildLineTests(unittest.TestCase):
         )
         with BuildLine(Plane.XZ) as arc:
             CenterArc((0, 0), 10, 0, 360)
-        self.assertTrue(Face.make_from_wires(arc.wires()[0]).is_coplanar(Plane.XZ))
+        self.assertTrue(Face(arc.wires()[0]).is_coplanar(Plane.XZ))
 
         with BuildLine(Plane.XZ) as arc:
             CenterArc((-100, 0), 100, -45, 90)
         self.assertTupleAlmostEquals((arc.edges()[0] @ 0.5).to_tuple(), (0, 0, 0), 5)
 
         arc = CenterArc((-100, 0), 100, 0, 360)
-        self.assertTrue(Face.make_from_wires(arc.wires()[0]).is_coplanar(Plane.XY))
+        self.assertTrue(Face(arc.wires()[0]).is_coplanar(Plane.XY))
         self.assertTupleAlmostEquals(arc.bounding_box().max, (0, 100, 0), 5)
 
     def test_polyline(self):
@@ -308,7 +350,7 @@ class BuildLineTests(unittest.TestCase):
                 Line((0, 0))  # Need two points
         with self.assertRaises(ValueError):
             with BuildLine():
-                Polyline((0, 0), (1, 1))  # Need three points
+                Polyline((0, 0))  # Need two points
         with self.assertRaises(ValueError):
             with BuildLine():
                 RadiusArc((0, 0), (1, 0), 0.1)  # Radius too small

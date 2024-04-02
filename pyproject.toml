@@ -43,7 +43,7 @@ dependencies = [
     "ezdxf >= 1.0.0, < 2",
     "numpy-stl >= 3.0.0, <4",
     "ipython >= 8.0.0, <9",
-    "py-lib3mf",
+    "py-lib3mf >= 2.3.1",
     "ocpsvg",
     "trianglesolver"
 ]
@@ -61,3 +61,6 @@ exclude = ["build123d._dev"]
 [tool.setuptools_scm]
 write_to = "src/build123d/_version.py"
 
+[tool.black]
+target-version = ["py39", "py310", "py311", "py312"]
+line-length = 88

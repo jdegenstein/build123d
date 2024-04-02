@@ -1,4 +1,5 @@
 """build123d import definitions"""
+
 from build123d.build_common import *
 from build123d.build_enums import *
 from build123d.build_line import *
@@ -19,6 +20,7 @@ from build123d.pack import *
 from build123d.topology import *
 from build123d.drafting import *
 from build123d.persistence import modify_copyreg
+from build123d.exporters3d import *
 
 from .version import version as __version__
 
@@ -31,6 +33,8 @@ __all__ = [
     "M",
     "IN",
     "FT",
+    # Unit Conversions
+    "UNITS_PER_METER",
     # Mass Constants
     "G",
     "KG",
@@ -72,6 +76,7 @@ __all__ = [
     "BaseLineObject",
     "Bezier",
     "CenterArc",
+    "DoubleTangentArc",
     "EllipticalCenterArc",
     "EllipticalStartArc",
     "FilletPolyline",
@@ -185,6 +190,7 @@ __all__ = [
     "chamfer",
     "extrude",
     "fillet",
+    "full_round",
     "loft",
     "make_brake_formed",
     "make_face",
@@ -201,4 +207,10 @@ __all__ = [
     "sweep",
     "thicken",
     "trace",
+    # Topology Exploration
+    "topo_explore_connected_edges",
+    "topo_explore_common_vertex",
+    # 3D Exporters
+    "export_step",
+    "export_gltf",
 ]

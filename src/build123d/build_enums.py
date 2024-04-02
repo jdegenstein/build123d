@@ -25,6 +25,7 @@ license:
     limitations under the License.
 
 """
+
 from __future__ import annotations
 from enum import Enum, auto
 
@@ -265,6 +266,25 @@ class PositionMode(Enum):
 
     LENGTH = auto()
     PARAMETER = auto()
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}.{self.name}>"
+
+
+class PrecisionMode(Enum):
+    """
+    When you export a model to a STEP file, the precision of the geometric data
+    (such as the coordinates of points, the definitions of curves and surfaces, etc.)
+    can significantly impact the file size and the fidelity of the model when it is
+    imported into another CAD system. Higher precision means that the geometric
+    data is described with more detail, which can improve the accuracy of the model
+    in the target system but can also increase the file size.
+    """
+
+    SESSION = 2
+    GREATEST = 1
+    AVERAGE = 0
+    LEAST = -1
 
     def __repr__(self):
         return f"<{self.__class__.__name__}.{self.name}>"

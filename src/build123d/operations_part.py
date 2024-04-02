@@ -25,6 +25,7 @@ license:
     limitations under the License.
 
 """
+
 from __future__ import annotations
 from typing import Union, Iterable
 from build123d.build_enums import Mode, Until, Kind, Side
@@ -176,7 +177,7 @@ def extrude(
         if clean:
             new_solids = [solid.clean() for solid in new_solids]
 
-    return Part(Compound.make_compound(new_solids).wrapped)
+    return Part(ShapeList(new_solids).solids())
 
 
 def loft(
@@ -250,7 +251,7 @@ def loft(
     elif clean:
         new_solid = new_solid.clean()
 
-    return Part(Compound.make_compound([new_solid]).wrapped)
+    return Part(Compound([new_solid]).wrapped)
 
 
 def make_brake_formed(
@@ -310,7 +311,7 @@ def make_brake_formed(
     offset_vertices = offset_line.vertices()
 
     try:
-        plane = Plane(Face.make_from_wires(offset_line))
+        plane = Plane(Face(offset_line))
     except Exception as exc:
         raise ValueError("line not suitable - probably straight") from exc
 
@@ -356,7 +357,7 @@ def make_brake_formed(
     elif clean:
         new_solid = new_solid.clean()
 
-    return Part(Compound.make_compound([new_solid]).wrapped)
+    return Part(Compound([new_solid]).wrapped)
 
 
 def project_workplane(
@@ -472,7 +473,7 @@ def revolve(
 
         new_solids.append(Solid.revolve(profile, angle, axis))
 
-    new_solid = Compound.make_compound(new_solids)
+    new_solid = Compound(new_solids)
     if context is not None:
         context._add_to_context(*new_solids, clean=clean, mode=mode)
     elif clean:
@@ -541,7 +542,7 @@ def section(
         if clean:
             new_objects = [r.clean() for r in new_objects]
 
-    return Sketch(Compound.make_compound(new_objects).wrapped)
+    return Sketch(Compound(new_objects).wrapped)
 
 
 def thicken(
@@ -616,4 +617,4 @@ def thicken(
         if clean:
             new_solids = [solid.clean() for solid in new_solids]
 
-    return Part(Compound.make_compound(new_solids).wrapped)
+    return Part(Compound(new_solids).wrapped)

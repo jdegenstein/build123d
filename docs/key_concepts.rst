@@ -192,6 +192,7 @@ and then work in local 2D coordinate space.
 .. code-block:: python
 
     with BuildPart(Plane.XY) as example:
+        ... # a 3D-part
         with BuildSketch(example.faces().sort_by(sort_by=Axis.Z)[0]) as bottom:
             ...
         with BuildSketch(Plane.XZ) as vertical:
@@ -295,7 +296,7 @@ more locations are active within a scope.  For example:
     with BuildPart():
         with Locations((0,10),(0,-10)):
             Box(1,1,1)
-            with GridLocations(x_spacing=5, y_spacing=5, x_count=2, y_count=2)
+            with GridLocations(x_spacing=5, y_spacing=5, x_count=2, y_count=2):
                 Sphere(1)
             Cylinder(1,1)
 
@@ -334,32 +335,29 @@ Operation Inputs
 ================
 
 When one is operating on an existing object, e.g. adding a fillet to a part,
-a sequence of objects is often required. A python sequence of objects is
-simply either a single object or a string of objects separated by commas.
-To pass an array into a sequence, precede it with a ``*`` operator.
-When a sequence is followed by another parameter, that parameter must be
-entered as a keyword parameter (e.g. radius=1) to separate this parameter
-from the preceding sequence.
+an iterable of objects is often required (often a ShapeList).
 
-Here is the definition of ``Fillet`` to help illustrate:
+Here is the definition of :meth:`~operations_generic.fillet` to help illustrate:
 
 .. code-block:: python
 
-    class Fillet(Compound):
-        def __init__(self, *objects: Union[Edge, Vertex], radius: float):
+    def fillet(
+        objects: Union[Union[Edge, Vertex], Iterable[Union[Edge, Vertex]]],
+        radius: float,
+    ):
 
-To use this fillet operation, a sequence of edges or vertices must be provided
-followed by a fillet radius as follows:
+To use this fillet operation, an edge or vertex or iterable of edges or 
+vertices must be provided followed by a fillet radius with or without the keyword as follows:
 
 .. code-block:: python
 
     with BuildPart() as pipes:
         Box(10, 10, 10, rotation=(10, 20, 30))
         ...
-        Fillet(*pipes.edges(Select.LAST), radius=0.2)
+        fillet(pipes.edges(Select.LAST), radius=0.2)
 
-Here the list of edges from the last operation of the ``pipes`` builder are converted
-to a sequence and a radius is provided as a keyword argument.
+Here the fillet accepts the iterable ShapeList of edges from the last operation of
+the ``pipes`` builder and a radius is provided as a keyword argument.
 
 Combination Modes
 =================
@@ -399,7 +397,7 @@ Selectors
 Using Locations & Rotating Objects
 ==================================
 
-build123d stores points (to be specific ``Locations``) internally to be used as
+build123d stores points (to be specific ``Location`` (s)) internally to be used as
 positions for the placement of new objects.  By default, a single location
 will be created at the origin of the given workplane such that:
 
@@ -446,16 +444,22 @@ there was one.  Here is an example:
 
 .. code-block:: python
 
+    height, width, thickness, f_rad = 60, 80, 20, 10
+
     with BuildPart() as pillow_block:
         with BuildSketch() as plan:
             Rectangle(width, height)
-            Fillet(*plan.vertices(), radius=fillet)
-        Extrude(thickness)
+            fillet(plan.vertices(), radius=f_rad)
+        extrude(amount=thickness)
 
-``BuildSketch`` exits after the ``Fillet`` operation and when doing so it transfers
+``BuildSketch`` exits after the ``fillet`` operation and when doing so it transfers
 the sketch to the ``pillow_block`` instance of ``BuildPart`` as the internal instance variable
-``pending_faces``. This allows the ``Extrude`` operation to be immediately invoked as it
-extrudes these pending faces into ``Solid`` objects. Likewise, ``Loft`` will take all of the
+``pending_faces``. This allows the ``extrude`` operation to be immediately invoked as it
+extrudes these pending faces into ``Solid`` objects. Likewise, ``loft`` would take all of the
 ``pending_faces`` and attempt to create a single ``Solid`` object from them.
 
-Normally the user will not need to interact directly with pending objects.
+Normally the user will not need to interact directly with pending objects; however,
+one can see pending Edges and Faces with ``<builder_instance>.pending_edges`` and 
+``<builder_instance>.pending_faces`` attributes.  In the above example, by adding a 
+``print(pillow_block.pending_faces)`` prior to the ``extrude(amount=thickness)`` the
+pending ``Face`` from the ``BuildSketch`` will be displayed.

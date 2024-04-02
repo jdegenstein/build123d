@@ -38,6 +38,7 @@ license:
     limitations under the License.
 
 """
+
 from __future__ import annotations
 
 import contextvars
@@ -52,7 +53,7 @@ from math import sqrt
 from typing import Any, Callable, Iterable, Optional, Union, TypeVar
 from typing_extensions import Self, ParamSpec, Concatenate
 
-from build123d.build_enums import Align, Mode, Select
+from build123d.build_enums import Align, Mode, Select, Unit
 from build123d.geometry import Axis, Location, Plane, Vector, VectorLike
 from build123d.topology import (
     Compound,
@@ -91,12 +92,23 @@ logger = logging.getLogger("build123d")
 #
 
 # LENGTH CONSTANTS
+MC = 0.0001
 MM = 1
 CM = 10 * MM
 M = 1000 * MM
 IN = 25.4 * MM
 FT = 12 * IN
 THOU = IN / 1000
+
+# UNIT CONVERSIONS
+UNITS_PER_METER = {
+    Unit.IN: M / IN,
+    Unit.FT: M / FT,
+    Unit.MC: M / MC,
+    Unit.MM: M / MM,
+    Unit.CM: M / CM,
+    Unit.M: 1,
+}
 
 # MASS CONSTANTS
 G = 1
@@ -135,6 +147,7 @@ operations_apply_to = {
     "chamfer": ["BuildPart", "BuildSketch", "BuildLine"],
     "extrude": ["BuildPart"],
     "fillet": ["BuildPart", "BuildSketch", "BuildLine"],
+    "full_round": ["BuildSketch"],
     "loft": ["BuildPart"],
     "make_brake_formed": ["BuildPart"],
     "make_face": ["BuildSketch"],
@@ -421,7 +434,7 @@ class Builder(ABC):
                         raise RuntimeError("Nothing to intersect with")
                     self._obj = self._obj.intersect(*typed[self._shape])
                 elif mode == Mode.REPLACE:
-                    self._obj = Compound.make_compound(list(typed[self._shape]))
+                    self._obj = Compound(list(typed[self._shape]))
 
                 if self._obj is not None and clean:
                     self._obj = self._obj.clean()
@@ -452,9 +465,7 @@ class Builder(ABC):
                 if isinstance(self._obj, Compound):
                     self._obj = self._sub_class(self._obj.wrapped)
                 else:
-                    self._obj = self._sub_class(
-                        Compound.make_compound(self._shapes()).wrapped
-                    )
+                    self._obj = self._sub_class(Compound(self._shapes()).wrapped)
 
             # Add to pending
             if self._tag == "BuildPart":
@@ -724,6 +735,33 @@ class Builder(ABC):
                     f"{operation} doesn't accept {type(obj).__name__},"
                     f" did you intend <keyword>={obj}?"
                 )
+
+    def _invalid_combine(self):
+        """Raise an error for invalid boolean combine operations"""
+        raise RuntimeError(
+            f"{self.__class__.__name__} is a builder of Shapes and can't be "
+            f"combined. The object being constructed is accessible via the "
+            f"'{self._obj_name}' attribute."
+        )
+
+    def __add__(self, _other) -> Self:
+        """Invalid add"""
+        self._invalid_combine()
+
+    def __sub__(self, _other) -> Self:
+        """Invalid sub"""
+        self._invalid_combine()
+
+    def __and__(self, _other) -> Self:
+        """Invalid and"""
+        self._invalid_combine()
+
+    def __getattr__(self, name):
+        """The user is likely trying to reference the builder's object"""
+        raise AttributeError(
+            f"'{self.__class__.__name__}' has no attribute '{name}'. "
+            f"Did you intend '<{self.__class__.__name__}>.{self._obj_name}.{name}'?"
+        )
 
 
 def validate_inputs(
@@ -1030,17 +1068,9 @@ class Locations(LocationList):
             list[Location]: group of locations moved to existing locations as a group
         """
         location_group = []
-        if LocationList._get_context():
-            local_vertex_compound = Compound.make_compound(
-                [Face.make_rect(1, 1).locate(l) for l in local_locations]
-            )
+        if LocationList._get_context() is not None:
             for group_center in LocationList._get_context().local_locations:
-                location_group.extend(
-                    [
-                        v.location
-                        for v in local_vertex_compound.moved(group_center).faces()
-                    ]
-                )
+                location_group.extend([group_center * l for l in local_locations])
         else:
             location_group = local_locations
         return location_group

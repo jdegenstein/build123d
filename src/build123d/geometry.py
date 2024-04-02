@@ -26,6 +26,7 @@ license:
     limitations under the License.
 
 """
+
 from __future__ import annotations
 
 # pylint has trouble with the OCP imports
@@ -48,6 +49,7 @@ from typing import (
     overload,
     TypeVar,
 )
+from typing_extensions import deprecated
 
 from OCP.Bnd import Bnd_Box, Bnd_OBB
 from OCP.BRep import BRep_Tool
@@ -76,7 +78,7 @@ from OCP.gp import (
 
 # properties used to store mass calculation result
 from OCP.GProp import GProp_GProps
-from OCP.Quantity import Quantity_ColorRGBA
+from OCP.Quantity import Quantity_Color, Quantity_ColorRGBA
 from OCP.TopLoc import TopLoc_Location
 from OCP.TopoDS import TopoDS_Face, TopoDS_Shape
 
@@ -888,32 +890,28 @@ class Color:
         """
 
     @overload
-    def __init__(self, color_code: int):
+    def __init__(self, color_code: int, alpha: int = 0xFF):
         """Color from a hexidecimal color code with an optional alpha value
 
         Args:
-            color_code (hexidecial int): 0xRRGGBB or 0xRRGGBBAA
+            color_code (hexidecimal int): 0xRRGGBB
+            alpha (hexidecimal int): 0x00 <= alpha as hex <= 0xFF
         """
 
     def __init__(self, *args, **kwargs):
         # pylint: disable=too-many-branches
         red, green, blue, alpha, name, color_code = 1.0, 1.0, 1.0, 1.0, None, None
-        if len(args) >= 1:
-            if isinstance(args[0], str):
-                name = args[0]
-            if isinstance(args[0], float):
-                red = args[0]
-            else:
+
+        if len(args) == 1 or len(args) == 2:
+            if isinstance(args[0], int):
                 color_code = args[0]
-                red = args[0]
-        if len(args) >= 2:
-            color_code = None
-            if name:
-                alpha = args[1]
-            else:
-                green = args[1]
-        if len(args) >= 3:
-            blue = args[2]
+                alpha = args[1] if len(args) == 2 else 0xFF
+            elif isinstance(args[0], str):
+                name = args[0]
+                if len(args) == 2:
+                    alpha = args[1]
+        elif len(args) >= 3:
+            red, green, blue = args[0:3]
         if len(args) == 4:
             alpha = args[3]
 
@@ -921,21 +919,18 @@ class Color:
         red = kwargs.get("red", red)
         green = kwargs.get("green", green)
         blue = kwargs.get("blue", blue)
-        alpha = kwargs.get("alpha", alpha)
+        if color_code is None:
+            alpha = kwargs.get("alpha", alpha)
+        else:
+            alpha = kwargs.get("alpha", alpha)
+            alpha = alpha / 255
 
         if color_code is not None and isinstance(color_code, int):
-            if color_code > 256**3:
-                red, remainder = divmod(color_code, 256**3)
-                green, remainder = divmod(remainder, 256**2)
-                blue, alpha = divmod(remainder, 256)
-            else:
-                red, remainder = divmod(color_code, 256**2)
-                green, blue = divmod(remainder, 256)
-                alpha = 255
+            red, remainder = divmod(color_code, 256**2)
+            green, blue = divmod(remainder, 256)
             red = red / 255
             green = green / 255
             blue = blue / 255
-            alpha = alpha / 255
 
         if name:
             self.wrapped = Quantity_ColorRGBA()
@@ -946,26 +941,47 @@ class Color:
         else:
             self.wrapped = Quantity_ColorRGBA(red, green, blue, alpha)
 
-    def to_tuple(self) -> Tuple[float, float, float, float]:
-        """
-        Convert Color to RGB tuple.
-        """
-        alpha = self.wrapped.Alpha()
-        rgb = self.wrapped.GetRGB()
+        self.iter_index = 0
 
-        return (rgb.Red(), rgb.Green(), rgb.Blue(), alpha)
+    def __iter__(self):
+        """Initialize to beginning"""
+        self.iter_index = 0
+        return self
+
+    def __next__(self):
+        """return the next value"""
+        rgb = self.wrapped.GetRGB()
+        rgb_tuple = (rgb.Red(), rgb.Green(), rgb.Blue(), self.wrapped.Alpha())
+
+        if self.iter_index > 3:
+            raise StopIteration
+        else:
+            value = rgb_tuple[self.iter_index]
+            self.iter_index += 1
+        return value
+
+    # @deprecated
+    def to_tuple(self):
+        """Value as tuple"""
+        return tuple(self)
 
     def __copy__(self) -> Color:
         """Return copy of self"""
-        return Color(*self.to_tuple())
+        return Color(*tuple(self))
 
     def __deepcopy__(self, _memo) -> Color:
         """Return deepcopy of self"""
-        return Color(*self.to_tuple())
+        return Color(*tuple(self))
 
     def __str__(self) -> str:
         """Generate string"""
-        return f"Color: {str(self.to_tuple())}"
+        quantity_color_enum = self.wrapped.GetRGB().Name()
+        quantity_color_str = Quantity_Color.StringName_s(quantity_color_enum)
+        return f"Color: {str(tuple(self))} ~ {quantity_color_str}"
+
+    def __repr__(self) -> str:
+        """Color repr"""
+        return f"Color{str(tuple(self))}"
 
 
 class Location:
@@ -1828,7 +1844,9 @@ class Plane(metaclass=PlaneMeta):
                     BRep_Tool.Surface_s(arg_face.wrapped).Position().XDirection()
                 )
             )
+            self.x_dir = Vector(round(i, 14) for i in self.x_dir)
             self.z_dir = Plane.get_topods_face_normal(arg_face.wrapped)
+            self.z_dir = Vector(round(i, 14) for i in self.z_dir)
         elif arg_location:
             topo_face = BRepBuilderAPI_MakeFace(
                 Plane.XY.wrapped, -1.0, 1.0, -1.0, 1.0
@@ -1836,7 +1854,9 @@ class Plane(metaclass=PlaneMeta):
             topo_face.Move(arg_location.wrapped)
             self._origin = arg_location.position
             self.x_dir = Vector(BRep_Tool.Surface_s(topo_face).Position().XDirection())
+            self.x_dir = Vector(round(i, 14) for i in self.x_dir)
             self.z_dir = Plane.get_topods_face_normal(topo_face)
+            self.z_dir = Vector(round(i, 14) for i in self.z_dir)
         elif arg_origin:
             self._origin = Vector(arg_origin)
             self.x_dir = Vector(arg_x_dir) if arg_x_dir else None
@@ -1948,6 +1968,10 @@ class Plane(metaclass=PlaneMeta):
         x_dir_str = ", ".join((f"{v:.2f}" for v in self.x_dir.to_tuple()))
         z_dir_str = ", ".join((f"{v:.2f}" for v in self.z_dir.to_tuple()))
         return f"Plane(o=({origin_str}), x=({x_dir_str}), z=({z_dir_str}))"
+
+    def reverse(self) -> Plane:
+        """Reverse z direction of plane"""
+        return -self
 
     @property
     def origin(self) -> Vector:

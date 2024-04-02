@@ -26,9 +26,10 @@ license:
     limitations under the License.
 
 """
+
 import copy
 import logging
-from math import radians, tan
+from math import radians, tan, isclose
 from typing import Union, Iterable
 
 from build123d.build_common import (
@@ -38,7 +39,7 @@ from build123d.build_common import (
     flatten_sequence,
     validate_inputs,
 )
-from build123d.build_enums import Keep, Kind, Mode, Side, Transition
+from build123d.build_enums import Keep, Kind, Mode, Side, Transition, GeomType
 from build123d.build_line import BuildLine
 from build123d.build_part import BuildPart
 from build123d.build_sketch import BuildSketch
@@ -188,7 +189,7 @@ def add(
     else:
         raise RuntimeError(f"Builder {context.__class__.__name__} is unsupported")
 
-    return Compound.make_compound(new_objects)
+    return Compound(new_objects)
 
 
 def bounding_box(
@@ -229,12 +230,10 @@ def bounding_box(
                 (bbox.max.X, bbox.min.Y),
                 (bbox.min.X, bbox.min.Y),
             ]
-            new_faces.append(
-                Face.make_from_wires(Wire.make_polygon([Vector(v) for v in vertices]))
-            )
+            new_faces.append(Face(Wire.make_polygon([Vector(v) for v in vertices])))
         if context is not None:
             context._add_to_context(*new_faces, mode=mode)
-        return Sketch(Compound.make_compound(new_faces).wrapped)
+        return Sketch(Compound(new_faces).wrapped)
 
     new_objects = []
     for obj in object_list:
@@ -251,7 +250,7 @@ def bounding_box(
         )
     if context is not None:
         context._add_to_context(*new_objects, mode=mode)
-    return Part(Compound.make_compound(new_objects).wrapped)
+    return Part(Compound(new_objects).wrapped)
 
 
 #:TypeVar("ChamferFilletType"): Type of objects which can be chamfered or filleted
@@ -326,7 +325,7 @@ def chamfer(
 
         if context is not None:
             context._add_to_context(new_part, mode=Mode.REPLACE)
-        return Part(Compound.make_compound([new_part]).wrapped)
+        return Part(Compound([new_part]).wrapped)
 
     if target._dim == 2:
         # Convert BaseSketchObject into Sketch so casting into Sketch during construction works
@@ -344,7 +343,7 @@ def chamfer(
                 )
             else:
                 new_faces.append(face)
-        new_sketch = Sketch(Compound.make_compound(new_faces).wrapped)
+        new_sketch = Sketch(Compound(new_faces).wrapped)
 
         if context is not None:
             context._add_to_context(new_sketch, mode=Mode.REPLACE)
@@ -362,8 +361,16 @@ def chamfer(
         if not target.is_closed:
             object_list = filter(
                 lambda v: not (
-                    (Vector(*v.to_tuple()) - target.position_at(0)).length == 0
-                    or (Vector(*v.to_tuple()) - target.position_at(1)).length == 0
+                    isclose(
+                        (Vector(*v.to_tuple()) - target.position_at(0)).length,
+                        0.0,
+                        abs_tol=1e-14,
+                    )
+                    or isclose(
+                        (Vector(*v.to_tuple()) - target.position_at(1)).length,
+                        0.0,
+                        abs_tol=1e-14,
+                    )
                 ),
                 object_list,
             )
@@ -420,7 +427,7 @@ def fillet(
 
         if context is not None:
             context._add_to_context(new_part, mode=Mode.REPLACE)
-        return Part(Compound.make_compound([new_part]).wrapped)
+        return Part(Compound([new_part]).wrapped)
 
     if target._dim == 2:
         # Convert BaseSketchObject into Sketch so casting into Sketch during construction works
@@ -437,7 +444,7 @@ def fillet(
                 new_faces.append(face.fillet_2d(radius, vertices_in_face))
             else:
                 new_faces.append(face)
-        new_sketch = Sketch(Compound.make_compound(new_faces).wrapped)
+        new_sketch = Sketch(Compound(new_faces).wrapped)
 
         if context is not None:
             context._add_to_context(new_sketch, mode=Mode.REPLACE)
@@ -455,8 +462,16 @@ def fillet(
         if not target.is_closed:
             object_list = filter(
                 lambda v: not (
-                    (Vector(*v.to_tuple()) - target.position_at(0)).length == 0
-                    or (Vector(*v.to_tuple()) - target.position_at(1)).length == 0
+                    isclose(
+                        (Vector(*v.to_tuple()) - target.position_at(0)).length,
+                        0.0,
+                        abs_tol=1e-14,
+                    )
+                    or isclose(
+                        (Vector(*v.to_tuple()) - target.position_at(1)).length,
+                        0.0,
+                        abs_tol=1e-14,
+                    )
                 ),
                 object_list,
             )
@@ -506,7 +521,7 @@ def mirror(
     if context is not None:
         context._add_to_context(*mirrored, mode=mode)
 
-    mirrored_compound = Compound.make_compound(mirrored)
+    mirrored_compound = Compound(mirrored)
     if all([obj._dim == 3 for obj in object_list]):
         return Part(mirrored_compound.wrapped)
     if all([obj._dim == 2 for obj in object_list]):
@@ -532,32 +547,29 @@ def offset(
 ) -> Union[Curve, Sketch, Part, Compound]:
     """Generic Operation: offset
 
-        Applies to 1, 2, and 3 dimensional objects.
+    Applies to 1, 2, and 3 dimensional objects.
 
-        Offset the given sequence of Edges, Faces, Compound of Faces, or Solids.
-        The kind parameter controls the shape of the transitions. For Solid
-        objects, the openings parameter allows selected faces to be open, like
-        a hollow box with no lid.
+    Offset the given sequence of Edges, Faces, Compound of Faces, or Solids.
+    The kind parameter controls the shape of the transitions. For Solid
+    objects, the openings parameter allows selected faces to be open, like
+    a hollow box with no lid.
 
-        Args:
-            objects (Union[Edge, Face, Solid, Compound]  or Iterable of): objects to offset
-            amount (float): positive values external, negative internal
-            openings (list[Face], optional), sequence of faces to open in part.
-                Defaults to None.
-            kind (Kind, optional): transition shape. Defaults to Kind.ARC.
-            side (Side, optional): side to place offset. Defaults to Side.BOTH.
-            closed (bool, optional): if Side!=BOTH, close the LEFT or RIGHT
-                offset. Defaults to True.
-    <<<<<<< Updated upstream
-            min_edge_length (float, optional): repair degenerate edges generated by offset
-                by eliminating edges of minimum length in offset wire. Defaults to None.
-    =======
-    >>>>>>> Stashed changes
-            mode (Mode, optional): combination mode. Defaults to Mode.REPLACE.
+    Args:
+        objects (Union[Edge, Face, Solid, Compound]  or Iterable of): objects to offset
+        amount (float): positive values external, negative internal
+        openings (list[Face], optional), sequence of faces to open in part.
+            Defaults to None.
+        kind (Kind, optional): transition shape. Defaults to Kind.ARC.
+        side (Side, optional): side to place offset. Defaults to Side.BOTH.
+        closed (bool, optional): if Side!=BOTH, close the LEFT or RIGHT
+            offset. Defaults to True.
+        min_edge_length (float, optional): repair degenerate edges generated by offset
+            by eliminating edges of minimum length in offset wire. Defaults to None.
+        mode (Mode, optional): combination mode. Defaults to Mode.REPLACE.
 
-        Raises:
-            ValueError: missing objects
-            ValueError: Invalid object type
+    Raises:
+        ValueError: missing objects
+        ValueError: Invalid object type
     """
     context: Builder = Builder._get_context("offset")
 
@@ -596,16 +608,24 @@ def offset(
             outer_wire = outer_wire.fix_degenerate_edges(min_edge_length)
         inner_wires = []
         for inner_wire in face.inner_wires():
-            offset_wire = inner_wire.offset_2d(-amount, kind=kind)
-            if min_edge_length is not None:
-                inner_wires.append(offset_wire.fix_degenerate_edges(min_edge_length))
-            else:
-                inner_wires.append(offset_wire)
-        new_faces.append(Face.make_from_wires(outer_wire, inner_wires))
+            try:
+                offset_wire = inner_wire.offset_2d(-amount, kind=kind)
+                if min_edge_length is not None:
+                    inner_wires.append(
+                        offset_wire.fix_degenerate_edges(min_edge_length)
+                    )
+                else:
+                    inner_wires.append(offset_wire)
+            except:
+                pass
+        new_face = Face(outer_wire, inner_wires)
+        if (new_face.normal_at() - face.normal_at()).length > 0.001:
+            new_face = -new_face
+        new_faces.append(new_face)
     if edges:
-        if len(edges) == 1 and edges[0].geom_type() == "LINE":
+        if len(edges) == 1 and edges[0].geom_type == GeomType.LINE:
             new_wires = [
-                Wire.make_wire(
+                Wire(
                     [
                         Edge.make_line(edges[0] @ 0.0, edges[0] @ 0.5),
                         Edge.make_line(edges[0] @ 0.5, edges[0] @ 1.0),
@@ -614,9 +634,7 @@ def offset(
             ]
         else:
             new_wires = [
-                Wire.make_wire(edges).offset_2d(
-                    amount, kind=kind, side=side, closed=closed
-                )
+                Wire(edges).offset_2d(amount, kind=kind, side=side, closed=closed)
             ]
         if min_edge_length is not None:
             new_wires = [w.fix_degenerate_edges(min_edge_length) for w in new_wires]
@@ -640,7 +658,7 @@ def offset(
     if context is not None:
         context._add_to_context(*new_objects, mode=mode)
 
-    offset_compound = Compound.make_compound(new_objects)
+    offset_compound = Compound(new_objects)
     if all([obj._dim == 3 for obj in object_list]):
         return Part(offset_compound.wrapped)
     if all([obj._dim == 2 for obj in object_list]):
@@ -748,15 +766,13 @@ def project(
     else:
         target = Face.make_rect(3 * object_size, 3 * object_size, plane=workplane)
 
-    # validate_inputs(context, "project", object_list)
     validate_inputs(context, "project")
 
     projected_shapes = []
     obj: Shape
     for obj in face_list + line_list:
-        # obj_to_screen = (workplane.origin - obj.center()).normalized()
         obj_to_screen = (target.center() - obj.center()).normalized()
-        if workplane.to_local_coords(obj_to_screen).Z > 0:
+        if workplane.from_local_coords(obj_to_screen).Z < 0:
             projection_direction = -workplane.z_dir * projection_flip
         else:
             projection_direction = workplane.z_dir * projection_flip
@@ -774,7 +790,7 @@ def project(
     projected_points = []
     for pnt in point_list:
         pnt_to_target = (workplane.origin - pnt).normalized()
-        if workplane.to_local_coords(pnt_to_target).Z > 0:
+        if workplane.from_local_coords(pnt_to_target).Z < 0:
             projection_axis = -Axis(pnt, workplane.z_dir * projection_flip)
         else:
             projection_axis = Axis(pnt, workplane.z_dir * projection_flip)
@@ -790,7 +806,7 @@ def project(
     if projected_points:
         result = ShapeList(projected_points)
     else:
-        result = Compound.make_compound(projected_shapes)
+        result = Compound(projected_shapes)
         if all([obj._dim == 2 for obj in object_list]):
             result = Sketch(result.wrapped)
         elif all([obj._dim == 1 for obj in object_list]):
@@ -865,7 +881,7 @@ def scale(
     if context is not None:
         context._add_to_context(*new_objects, mode=mode)
 
-    scale_compound = Compound.make_compound(new_objects)
+    scale_compound = Compound(new_objects)
     if all([obj._dim == 3 for obj in object_list]):
         return Part(scale_compound.wrapped)
     if all([obj._dim == 2 for obj in object_list]):
@@ -918,7 +934,7 @@ def split(
     if context is not None:
         context._add_to_context(*new_objects, mode=mode)
 
-    split_compound = Compound.make_compound(new_objects)
+    split_compound = Compound(new_objects)
     if all([obj._dim == 3 for obj in object_list]):
         return Part(split_compound.wrapped)
     if all([obj._dim == 2 for obj in object_list]):
@@ -972,18 +988,16 @@ def sweep(
     if path is None:
         if context is None or context is not None and not context.pending_edges:
             raise ValueError("path must be provided")
-        path_wire = Wire.make_wire(context.pending_edges)
+        path_wire = Wire(context.pending_edges)
         context.pending_edges = []
     else:
         if isinstance(path, Iterable):
             try:
-                path_wire = Wire.make_wire(path)
+                path_wire = Wire(path)
             except ValueError as err:
                 raise ValueError("Unable to build path from edges") from err
         else:
-            path_wire = (
-                Wire.make_wire(path.edges()) if not isinstance(path, Wire) else path
-            )
+            path_wire = Wire(path.edges()) if not isinstance(path, Wire) else path
 
     if not section_list:
         if (
@@ -1011,7 +1025,7 @@ def sweep(
         if binormal is None and normal is not None:
             binormal_mode = Vector(normal)
         elif isinstance(binormal, Edge):
-            binormal_mode = Wire.make_wire([binormal])
+            binormal_mode = Wire([binormal])
         else:
             binormal_mode = binormal
         if multisection:
@@ -1035,7 +1049,9 @@ def sweep(
     new_faces = []
     if edge_list:
         for sec in section_list:
-            swept = Face.sweep(sec, path_wire)  # Could generate a shell here
+            swept = Face.sweep(
+                sec, path_wire, transition
+            )  # Could generate a shell here
             new_faces.extend(swept.faces())
 
     if context is not None:
@@ -1045,5 +1061,5 @@ def sweep(
         new_faces = [face.clean() for face in new_faces]
 
     if new_solids:
-        return Part(Compound.make_compound(new_solids).wrapped)
-    return Sketch(Compound.make_compound(new_faces).wrapped)
+        return Part(Compound(new_solids).wrapped)
+    return Sketch(Compound(new_faces).wrapped)

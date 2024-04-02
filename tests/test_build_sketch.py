@@ -25,6 +25,7 @@ license:
     limitations under the License.
 
 """
+
 import unittest
 from math import pi, sqrt
 from build123d import *
@@ -135,7 +136,7 @@ class TestBuildOnPlanes(unittest.TestCase):
 
 class TestUpSideDown(unittest.TestCase):
     def test_flip_face(self):
-        f1 = Face.make_from_wires(
+        f1 = Face(
             Wire.make_polygon([(1, 0), (1.5, 0.5), (1, 2), (3, 1), (2, 0), (1, 0)])
         )
         f1 = (
@@ -145,9 +146,7 @@ class TestUpSideDown(unittest.TestCase):
         ).faces()[0]
         self.assertTrue(f1.normal_at().Z < 0)  # Up-side-down
 
-        f2 = Face.make_from_wires(
-            Wire.make_polygon([(1, 0), (1.5, -1), (2, -1), (2, 0), (1, 0)])
-        )
+        f2 = Face(Wire.make_polygon([(1, 0), (1.5, -1), (2, -1), (2, 0), (1, 0)]))
         self.assertTrue(f2.normal_at().Z > 0)  # Right-side-up
         with BuildSketch() as flip_test:
             add(f1)
@@ -264,6 +263,7 @@ class TestBuildSketchObjects(unittest.TestCase):
         self.assertTupleAlmostEquals(
             test.sketch.faces()[0].normal_at().to_tuple(), (0, 0, 1), 5
         )
+        self.assertAlmostEqual(r.apothem, 2 * sqrt(3) / 2)
 
     def test_regular_polygon_minor_radius(self):
         with BuildSketch() as test:
@@ -387,7 +387,7 @@ class TestBuildSketchObjects(unittest.TestCase):
                 Trapezoid(6, 2, 150)
 
         with BuildSketch() as test:
-            t = Trapezoid(12,8,135,90)
+            t = Trapezoid(12, 8, 135, 90)
         self.assertEqual(t.width, 12)
         self.assertEqual(t.trapezoid_height, 8)
         self.assertEqual(t.left_side_angle, 135)
@@ -461,6 +461,38 @@ class TestBuildSketchObjects(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             trace()
+
+        line = Polyline((0, 0), (10, 10), (20, 10))
+        test = trace(line, 4)
+        self.assertEqual(len(test.faces()), 3)
+        test = trace(line, 4).clean()
+        self.assertEqual(len(test.faces()), 1)
+
+    def test_full_round(self):
+        with BuildSketch() as test:
+            trap = Trapezoid(0.5, 1, 90 - 8)
+            full_round(test.edges().sort_by(Axis.Y)[-1])
+        self.assertLess(test.face().area, trap.face().area)
+
+        with self.assertRaises(ValueError):
+            full_round(test.edges().sort_by(Axis.Y))
+
+        with self.assertRaises(ValueError):
+            full_round(trap.edges().sort_by(Axis.X)[-1])
+
+        l1 = Edge.make_spline([(-1, 0), (1, 0)], tangents=((0, -8), (0, 8)), scale=True)
+        l2 = Edge.make_line(l1 @ 0, l1 @ 1)
+        face = Face(Wire([l1, l2]))
+        with self.assertRaises(ValueError):
+            full_round(face.edges()[0])
+
+        positive, c1, r1 = full_round(trap.edges().sort_by(SortBy.LENGTH)[0])
+        negative, c2, r2 = full_round(
+            trap.edges().sort_by(SortBy.LENGTH)[0], invert=True
+        )
+        self.assertLess(negative.area, positive.area)
+        self.assertAlmostEqual(r1, r2, 2)
+        self.assertTupleAlmostEquals(tuple(c1), tuple(c2), 2)
 
 
 if __name__ == "__main__":

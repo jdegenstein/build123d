@@ -2,6 +2,7 @@ import unittest, uuid
 from build123d.build_enums import MeshType, Unit
 from build123d.build_part import BuildPart
 from build123d.build_sketch import BuildSketch
+from build123d.exporters3d import export_stl
 from build123d.objects_part import Box, Cylinder
 from build123d.objects_sketch import Rectangle
 from build123d.operations_part import extrude
@@ -35,7 +36,7 @@ class DirectApiTestCase(unittest.TestCase):
 class TestProperties(unittest.TestCase):
     def test_version(self):
         exporter = Mesher()
-        self.assertEqual(exporter.library_version, "2.2.0")
+        self.assertEqual(exporter.library_version, "2.3.1")
 
     def test_units(self):
         for unit in Unit:
@@ -141,14 +142,14 @@ class TestAddShape(DirectApiTestCase):
         self.assertEqual(len(box.clean().faces()), 6)
         self.assertEqual(box.label, "blue")
         self.assertEqual(cone.label, "red")
-        self.assertTupleAlmostEquals(box.color.to_tuple(), (0, 0, 1, 1), 5)
-        self.assertTupleAlmostEquals(cone.color.to_tuple(), (1, 0, 0, 1), 5)
+        self.assertTupleAlmostEquals(tuple(box.color), (0, 0, 1, 1), 5)
+        self.assertTupleAlmostEquals(tuple(cone.color), (1, 0, 0, 1), 5)
 
     def test_add_compound(self):
         exporter = Mesher()
         box = Solid.make_box(1, 1, 1)
         cone = Solid.make_cone(1, 0, 2).locate(Location((0, -1, 0)))
-        shape_assembly = Compound.make_compound([box, cone])
+        shape_assembly = Compound([box, cone])
         exporter.add_shape(shape_assembly)
         exporter.write("test.3mf")
         importer = Mesher()
@@ -184,10 +185,24 @@ class TestDuplicateVertices(unittest.TestCase):
 class TestHollowImport(unittest.TestCase):
     def test_hollow_import(self):
         test_shape = Cylinder(5, 10) - Box(5, 5, 5)
-        test_shape.export_stl("test.stl")
+        export_stl(test_shape, "test.stl")
         importer = Mesher()
         stl = importer.read("test.stl")
         self.assertTrue(stl[0].is_valid())
+
+
+class TestImportDegenerateTriangles(unittest.TestCase):
+    def test_degenerate_import(self):
+        """Some STLs may contain 'triangles' where all three points are on a line"""
+        importer = Mesher()
+        try:
+            stl = importer.read("tests/cyl_w_rect_hole.stl")[0]
+        except:
+            stl = importer.read("cyl_w_rect_hole.stl")[0]
+        self.assertEqual(type(stl), Solid)
+        self.assertTrue(stl.is_manifold)
+        self.assertTrue(stl.is_valid())
+        self.assertEqual(sum(f.area == 0 for f in stl.faces()), 0)
 
 
 if __name__ == "__main__":
