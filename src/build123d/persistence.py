@@ -91,6 +91,7 @@ def deserialize_location(buffer: bytes) -> TopLoc_Location:
     if buffer is None:
         return None
 
+    return ocp_serializer.deserialize_location(buffer)
 
 
 def reduce_shape(shape: TopoDS_Shape) -> tuple:
