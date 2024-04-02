@@ -25,7 +25,6 @@ license:
     limitations under the License.
 
 """
-
 # pylint has trouble with the OCP imports
 # pylint: disable=no-name-in-module, import-error
 
@@ -51,6 +50,9 @@ from OCP.TopoDS import (
 from build123d.topology import downcast
 
 
+import ocp_serializer
+
+
 def serialize_shape(shape: TopoDS_Shape) -> bytes:
     """
     Serialize a OCP shape, this method can be used to provide a custom serialization algo for pickle
@@ -58,10 +60,7 @@ def serialize_shape(shape: TopoDS_Shape) -> bytes:
     if shape is None:
         return None
 
-    bio = io.BytesIO()
-    BinTools.Write_s(shape, bio)
-    buffer = bio.getvalue()
-    return buffer
+    return ocp_serializer.serialize_shape(shape)
 
 
 def deserialize_shape(buffer: bytes) -> TopoDS_Shape:
@@ -71,10 +70,7 @@ def deserialize_shape(buffer: bytes) -> TopoDS_Shape:
     if buffer is None:
         return None
 
-    shape = TopoDS_Shape()
-    bio = io.BytesIO(buffer)
-    BinTools.Read_s(shape, bio)
-    return downcast(shape)
+    return downcast(ocp_serializer.deserialize_shape(buffer))
 
 
 def serialize_location(location: TopLoc_Location) -> bytes:
@@ -84,23 +80,8 @@ def serialize_location(location: TopLoc_Location) -> bytes:
     """
     if location is None:
         return None
-    transform = location.Transformation()
-    translation = transform.TranslationPart()
-    rotation = transform.GetRotation()
-    # convert floats in bytes
-    translation_bytes = bytearray()
-    for i in range(1, 4):
-        translation_bytes.extend(struct.pack("f", translation.Coord(i)))
-    rotation_bytes = bytearray()
-    rotation_bytes.extend(struct.pack("f", rotation.X()))
-    rotation_bytes.extend(struct.pack("f", rotation.Y()))
-    rotation_bytes.extend(struct.pack("f", rotation.Z()))
-    rotation_bytes.extend(struct.pack("f", rotation.W()))
 
-    buffer = bytearray()
-    buffer.extend(translation_bytes)
-    buffer.extend(rotation_bytes)
-    return buffer
+    return ocp_serializer.serialize_location(location)
 
 
 def deserialize_location(buffer: bytes) -> TopLoc_Location:
@@ -110,27 +91,6 @@ def deserialize_location(buffer: bytes) -> TopLoc_Location:
     if buffer is None:
         return None
 
-    # Makes 4 bytes chunks (floats are 4 bytes long)
-    chunks = iter(struct.iter_unpack("f", buffer))
-    translation = gp_Vec(
-        next(chunks)[0],
-        next(chunks)[0],
-        next(chunks)[0],
-    )
-
-    # Read the rotation bytes
-    rotation = gp_Quaternion(
-        next(chunks)[0],
-        next(chunks)[0],
-        next(chunks)[0],
-        next(chunks)[0],
-    )
-
-    # Create the TopLoc_Location object
-    transform = gp_Trsf()
-    transform.SetTransformation(rotation, translation)
-
-    return TopLoc_Location(transform)
 
 
 def reduce_shape(shape: TopoDS_Shape) -> tuple:
