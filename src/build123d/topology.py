@@ -2300,21 +2300,21 @@ class Shape(NodeMixin):
 
         return self._apply_transform(transformation)
 
-    def __deepcopy__(self, memo) -> Self:
-        """Return deepcopy of self"""
-        # The wrapped object is a OCCT TopoDS_Shape which can't be pickled or copied
-        # with the standard python copy/deepcopy, so create a deepcopy 'memo' with this
-        # value already copied which causes deepcopy to skip it.
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        memo[id(self.wrapped)] = downcast(BRepBuilderAPI_Copy(self.wrapped).Shape())
-        for key, value in self.__dict__.items():
-            setattr(result, key, copy.deepcopy(value, memo))
-            if key == "joints":
-                for joint in result.joints.values():
-                    joint.parent = result
-        return result
+    # def __deepcopy__(self, memo) -> Self:
+    #     """Return deepcopy of self"""
+    #     # The wrapped object is a OCCT TopoDS_Shape which can't be pickled or copied
+    #     # with the standard python copy/deepcopy, so create a deepcopy 'memo' with this
+    #     # value already copied which causes deepcopy to skip it.
+    #     cls = self.__class__
+    #     result = cls.__new__(cls)
+    #     memo[id(self)] = result
+    #     memo[id(self.wrapped)] = downcast(BRepBuilderAPI_Copy(self.wrapped).Shape())
+    #     for key, value in self.__dict__.items():
+    #         setattr(result, key, copy.deepcopy(value, memo))
+    #         if key == "joints":
+    #             for joint in result.joints.values():
+    #                 joint.parent = result
+    #     return result
 
     def __copy__(self) -> Self:
         """Return shallow copy or reference of self
