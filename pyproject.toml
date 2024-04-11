@@ -24,7 +24,7 @@ keywords = [
     "brep",
     "cad",
     "cadquery",
-    "opencscade",
+    "opencascade",
     "python",
 ]
 license = {text = "Apache-2.0"}
@@ -45,7 +45,8 @@ dependencies = [
     "ipython >= 8.0.0, <9",
     "py-lib3mf >= 2.3.1",
     "ocpsvg",
-    "trianglesolver"
+    "trianglesolver",
+    # TODO: add "ocp_addons", package
 ]
 
 [project.urls]
