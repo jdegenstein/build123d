@@ -49,8 +49,7 @@ from OCP.TopoDS import (
 
 from build123d.topology import downcast
 
-
-import ocp_serializer
+from ocp_addons import serializer
 
 
 def serialize_shape(shape: TopoDS_Shape) -> bytes:
@@ -60,7 +59,7 @@ def serialize_shape(shape: TopoDS_Shape) -> bytes:
     if shape is None:
         return None
 
-    return ocp_serializer.serialize_shape(shape)
+    return serializer.serialize_shape(shape)
 
 
 def deserialize_shape(buffer: bytes) -> TopoDS_Shape:
@@ -70,7 +69,7 @@ def deserialize_shape(buffer: bytes) -> TopoDS_Shape:
     if buffer is None:
         return None
 
-    return downcast(ocp_serializer.deserialize_shape(buffer))
+    return downcast(serializer.deserialize_shape(buffer))
 
 
 def serialize_location(location: TopLoc_Location) -> bytes:
@@ -81,7 +80,7 @@ def serialize_location(location: TopLoc_Location) -> bytes:
     if location is None:
         return None
 
-    return ocp_serializer.serialize_location(location)
+    return serializer.serialize_location(location)
 
 
 def deserialize_location(buffer: bytes) -> TopLoc_Location:
@@ -91,7 +90,7 @@ def deserialize_location(buffer: bytes) -> TopLoc_Location:
     if buffer is None:
         return None
 
-    return ocp_serializer.deserialize_location(buffer)
+    return serializer.deserialize_location(buffer)
 
 
 def reduce_shape(shape: TopoDS_Shape) -> tuple:
