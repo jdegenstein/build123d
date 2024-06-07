@@ -2084,20 +2084,27 @@ class Shape(NodeMixin):
         """Return the shape type string for this class"""
         return tcast(Shapes, shape_LUT[shapetype(self.wrapped)])
 
+    # def _entities(self, topo_type: Shapes) -> list[TopoDS_Shape]:
+    #     out = {}  # using dict to prevent duplicates
+
+    #     explorer = TopExp_Explorer(self.wrapped, inverse_shape_LUT[topo_type])
+
+    #     while explorer.More():
+    #         item = explorer.Current()
+    #         # out[item.HashCode(HASH_CODE_MAX)] = (
+    #         out[hash(item)] = (
+    #             item  # needed to avoid pseudo-duplicate entities
+    #         )
+    #         explorer.Next()
+
+    #     return list(out.values())
+
     def _entities(self, topo_type: Shapes) -> list[TopoDS_Shape]:
-        out = {}  # using dict to prevent duplicates
+        
+        shape_set = TopTools_IndexedMapOfShape()
+        TopExp.MapShapes_s(self.wrapped, inverse_shape_LUT[topo_type], shape_set)
 
-        explorer = TopExp_Explorer(self.wrapped, inverse_shape_LUT[topo_type])
-
-        while explorer.More():
-            item = explorer.Current()
-            # out[item.HashCode(HASH_CODE_MAX)] = (
-            out[hash(item)] = (
-                item  # needed to avoid pseudo-duplicate entities
-            )
-            explorer.Next()
-
-        return list(out.values())
+        return tcast(list[TopoDS_Shape], shape_set)
 
     def _entities_from(
         self, child_type: Shapes, parent_type: Shapes
