@@ -1926,7 +1926,7 @@ class Shape(NodeMixin):
         Returns:
 
         """
-        return self.wrapped.HashCode(HASH_CODE_MAX)
+        return hash(self.wrapped)
 
     def is_null(self) -> bool:
         """Returns true if this shape is null. In other words, it references no
@@ -2091,7 +2091,8 @@ class Shape(NodeMixin):
 
         while explorer.More():
             item = explorer.Current()
-            out[item.HashCode(HASH_CODE_MAX)] = (
+            # out[item.HashCode(HASH_CODE_MAX)] = (
+            out[hash(item)] = (
                 item  # needed to avoid pseudo-duplicate entities
             )
             explorer.Next()
