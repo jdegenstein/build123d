@@ -263,6 +263,7 @@ from OCP.TopoDS import (
 from OCP.TopTools import (
     TopTools_HSequenceOfShape,
     TopTools_IndexedDataMapOfShapeListOfShape,
+    TopTools_IndexedMapOfShape,
     TopTools_ListOfShape,
     TopTools_SequenceOfShape,
 )
