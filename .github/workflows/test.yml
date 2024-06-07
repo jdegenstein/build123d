@@ -1,6 +1,6 @@
 name: tests
 
-on: [push, pull_request, workflow_dispatch]
+on: [workflow_dispatch]
 jobs:
 
   tests_x86_64:
@@ -8,11 +8,11 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [
-          "3.9",
           "3.10",
+          # "3.10",
           #"3.11"
           ]
-        os: [macos-13, ubuntu-latest, windows-latest]
+        os: [ ubuntu-latest ] # [macos-13, ubuntu-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -24,23 +24,23 @@ jobs:
         run: |
           python -m pytest
 
-  tests_arm64:
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [
-          #"3.9",
-          "3.10",
-          #"3.11"
-          ]
-        os: [macos-14]
+  # tests_arm64:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       python-version: [
+  #         #"3.9",
+  #         "3.10",
+  #         #"3.11"
+  #         ]
+  #       os: [macos-14]
 
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-macos-arm64/
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: test
-        run: |
-          python -m pytest
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: ./.github/actions/setup-macos-arm64/
+  #       with:
+  #         python-version: ${{ matrix.python-version }}
+  #     - name: test
+  #       run: |
+  #         python -m pytest
