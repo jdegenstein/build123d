@@ -944,6 +944,29 @@ class TestEdge(DirectApiTestCase):
         with self.assertRaises(ValueError):
             line.trim(0.75, 0.25)
 
+    def test_trim_to_length(self):
+
+        e1 = Edge.make_line((0, 0), (10, 10))
+        e1_trim = e1.trim_to_length(0.0, 10)
+        self.assertAlmostEqual(e1_trim.length, 10, 5)
+
+        e2 = Edge.make_circle(10, start_angle=0, end_angle=90)
+        e2_trim = e2.trim_to_length(0.5, 1)
+        self.assertAlmostEqual(e2_trim.length, 1, 5)
+        self.assertVectorAlmostEquals(
+            e2_trim.position_at(0), Vector(10, 0, 0).rotate(Axis.Z, 45), 5
+        )
+
+        e3 = Edge.make_spline(
+            [(0, 10, 0), (-4, 5, 2), (0, 0, 0)], tangents=[(-1, 0), (1, 0)]
+        )
+        e3_trim = e3.trim_to_length(0, 7)
+        self.assertAlmostEqual(e3_trim.length, 7, 5)
+
+        a4 = Axis((0, 0, 0), (1, 1, 1))
+        e4_trim = a4.as_infinite_edge().trim_to_length(0.5, 2)
+        self.assertAlmostEqual(e4_trim.length, 2, 5)
+
     def test_bezier(self):
         with self.assertRaises(ValueError):
             Edge.make_bezier((1, 1))
@@ -3423,8 +3446,11 @@ class TestVector(DirectApiTestCase):
         v11 = Vector((1,))
         v12 = Vector([1])
         v13 = Vector(X=1)
-        for v in [v10, v11, v12]:
+        for v in [v10, v11, v12, v13]:
             self.assertVectorAlmostEquals(v, (1, 0, 0), 4)
+
+        vertex = Vertex(0, 0, 0).moved(Pos(0, 0, 10))
+        self.assertVectorAlmostEquals(Vector(vertex), (0, 0, 10), 4)
 
         with self.assertRaises(TypeError):
             Vector("vector")
