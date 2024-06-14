@@ -22,7 +22,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: test
         run: |
-          python -m pytest tests/test_algebra.py
+          python -m pytest
   # ^only run one test to avoid segfault from hash changes
   #       python -m pytest
   
