@@ -4714,7 +4714,7 @@ class Curve(Compound):
 
         Equivalent operator: @
         """
-        return Wire(self.edges()).position_at(distance=position, position_mode=position_mode)
+        return Wire(self.edges()).position_at(distance=distance, position_mode=position_mode)
 
     def tangent_at(
         self,
@@ -4768,7 +4768,7 @@ class Curve(Compound):
 
         Equivalent operator: ^
         """
-        return Wire(self.edges()).location_at(distance=position, position_mode=position_mode, frame_method=frame_method, planar=planar)
+        return Wire(self.edges()).location_at(distance=distance, position_mode=position_mode, frame_method=frame_method, planar=planar)
 
     def wires(self) -> list[Wire]:
         """A list of wires created from the edges"""
