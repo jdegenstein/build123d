@@ -4687,15 +4687,88 @@ class Curve(Compound):
 
     def __matmul__(self, position: float) -> Vector:
         """Position on curve operator @ - only works if continuous"""
-        return Wire(self.edges()).position_at(position)
+        return self.position_at(position)
 
     def __mod__(self, position: float) -> Vector:
         """Tangent on wire operator % - only works if continuous"""
-        return Wire(self.edges()).tangent_at(position)
+        return self.tangent_at(position)
 
     def __xor__(self, position: float) -> Location:
         """Location on wire operator ^ - only works if continuous"""
-        return Wire(self.edges()).location_at(position)
+        return self.location_at(position)
+
+    def position_at(
+        self, distance: float, position_mode: PositionMode = PositionMode.PARAMETER
+    ) -> Vector:
+        """Position At
+
+        Generate a position along the underlying curve. Only works if continuous.
+
+        Args:
+            distance (float): distance or parameter value
+            position_mode (PositionMode, optional): position calculation mode. Defaults to
+                PositionMode.PARAMETER.
+
+        Returns:
+            Vector: position on the underlying curve
+
+        Equivalent operator: @
+        """
+        return Wire(self.edges()).position_at(distance=position, position_mode=position_mode)
+
+    def tangent_at(
+        self,
+        position: Union[float, VectorLike] = 0.5,
+        position_mode: PositionMode = PositionMode.PARAMETER,
+    ) -> Vector:
+        """tangent_at
+
+        Find the tangent at a given position on the 1D shape where the position
+        is either a float (or int) parameter or a point that lies on the shape.
+        Only works if continuous.
+
+        Args:
+            position (Union[float, VectorLike]): distance, parameter value, or
+                point on shape. Defaults to 0.5.
+            position_mode (PositionMode, optional): position calculation mode.
+                Defaults to PositionMode.PARAMETER.
+
+        Raises:
+            ValueError: invalid position
+
+        Returns:
+            Vector: tangent value
+
+        Equivalent operator: %
+        """
+        return Wire(self.edges()).tangent_at(position=position, position_mode=position_mode)
+    
+    def location_at(
+        self,
+        distance: float,
+        position_mode: PositionMode = PositionMode.PARAMETER,
+        frame_method: FrameMethod = FrameMethod.FRENET,
+        planar: bool = False,
+    ) -> Location:
+        """Locations along curve
+
+        Generate a location along the underlying curve. Only works if continuous.
+
+        Args:
+            distance (float): distance or parameter value
+            position_mode (PositionMode, optional): position calculation mode.
+                Defaults to PositionMode.PARAMETER.
+            frame_method (FrameMethod, optional): moving frame calculation method.
+                Defaults to FrameMethod.FRENET.
+            planar (bool, optional): planar mode. Defaults to False.
+
+        Returns:
+            Location: A Location object representing local coordinate system
+                at the specified distance.
+
+        Equivalent operator: ^
+        """
+        return Wire(self.edges()).location_at(distance=position, position_mode=position_mode, frame_method=frame_method, planar=planar)
 
     def wires(self) -> list[Wire]:
         """A list of wires created from the edges"""
