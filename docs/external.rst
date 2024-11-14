@@ -147,3 +147,16 @@ Library that helps perform `topology optimization <https://en.wikipedia.org/wiki
 your `OCP <https://github.com/CadQuery/OCP>`_-based CAD
 models (`CadQuery <https://github.com/CadQuery/cadquery>`_/`Build123d <https://github.com/gumyr/build123d>`_/...) using
 the `dl4to <https://github.com/dl4to/dl4to>`_ library.
+
+See: `yeicor-3d/dl4to4ocp <https://github.com/yeicor-3d/dl4to4ocp>`_
+
+*****
+Other Resources
+*****
+
+awesome-build123d
+=========
+
+A curated list of build123d code and resources.
+
+See: `phillipthelen/awesome-build123d <https://github.com/phillipthelen/awesome-build123d>`_
