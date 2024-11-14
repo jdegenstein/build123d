@@ -69,7 +69,7 @@ with BuildPart() as example_7:
         l1 = RadiusArc((0, 0), (1, 1), 2)
         l2 = Spline(l1 @ 1, (2, 3), (3, 3), tangents=(l1 % 1, (0, -1)))
         l3 = Line(l2 @ 1, (3, 0))
-    with BuildSketch(Plane(origin=l1 @ 0, z_dir=l1 % 0)) as example_7_section:
+    with BuildSketch(l1 ^ 0) as example_7_section:
         Circle(0.1)
     sweep()
 # [Ex. 7]
