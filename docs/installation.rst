@@ -2,7 +2,24 @@
 Installation
 ############
 
-The recommended method for most users is to install **build123d** is:
+Firstly, it should be noted that build123d itself does not provide a user interface or a 3D view of the generated shapes.
+From the perspective of the user, build123d is the modeling framework and the GUI components are provided by other projects. One example setup would be: VSCode with the Python, Jupyter, and OCP CAD Viewer extensions -- which would provide all recommended components of a usable build123d development environment (a text editor, a 3D viewer, and a python console).
+There are a number of other viewers available as listed at :ref:`external`.
+
+Recent updates to the `ocp_vscode <https://github.com/bernhard-42/vscode-ocp-cad-viewer>`_ project have eliminated the
+requirement to use VSCode and enabled the use of any modern browser to act as the 3D viewer component. Such a setup can
+typically be installed and configured in this way:
+
+.. doctest::
+
+	>>> pip install build123d ocp_vscode
+	>>> python -m ocp_vscode
+
+And in a 
+
+
+
+With all of this being said, the recommended method for most users to install **build123d** without any GUI related components is:
 
 .. doctest::
 
@@ -10,7 +27,7 @@ The recommended method for most users is to install **build123d** is:
 
 .. note::
 
-	The `ocp-vscode <https://github.com/bernhard-42/vscode-ocp-cad-viewer>`_ viewer has
+	The `OCP CAD Viewer <https://github.com/bernhard-42/vscode-ocp-cad-viewer>`_ extension for VSCode has
 	the ability to install **build123d**.
 
 Install build123d from GitHub:
@@ -113,7 +130,7 @@ Which should return something similar to:
 Special notes on Apple Silicon installs
 ----------------------------------------------
 
-Due to some dependencies not being available via pip, there is a bit of a hacky work around for Apple Silicon installs (M1 or M2 ARM64 architecture machines - if you aren't sure, try `uname -p` in a terminal and see if it returns arm).  Specifically the cadquery-ocp dependency fails to resolve at install time.  The error looks something like this:
+Due to some dependencies not being available via pip, there is a bit of a hacky work around for Apple Silicon installs (e.g. M1+ ARM64 architecture machines - if you aren't sure, try `uname -p` in a terminal and see if it returns arm).  Specifically the cadquery-ocp dependency fails to resolve at install time.  The error looks something like this:
 
 .. doctest::
 
