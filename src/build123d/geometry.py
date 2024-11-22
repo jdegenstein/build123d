@@ -194,7 +194,7 @@ class Vector:
             ):
                 geom_point = BRep_Tool.Pnt_s(first_arg.wrapped)
                 ocp_vec = gp_Vec(geom_point.XYZ())
-            elif isinstance(first_arg, (tuple, Iterable[float, int])):
+            elif isinstance(first_arg, (tuple, Iterable[Union[float, int]])):
                 try:
                     values = [float(value) for value in first_arg]
                 except (TypeError, ValueError) as exc:
@@ -1363,7 +1363,7 @@ class Location:
         elif len(args) == 1:
             translation = args[0]
 
-            if isinstance(translation, (Vector, Iterable[float, int])):
+            if isinstance(translation, (Vector, Iterable[Union[float, int]])):
                 transform.SetTranslationPart(Vector(translation).wrapped)
             elif isinstance(translation, Plane):
                 coordinate_system = gp_Ax3(
@@ -1386,8 +1386,8 @@ class Location:
 
         elif len(args) == 2:
             ordering = Intrinsic.XYZ
-            if isinstance(args[0], (Vector, Iterable[float, int])):
-                if isinstance(args[1], (Vector, Iterable[float, int])):
+            if isinstance(args[0], (Vector, Iterable[Union[float, int]])):
+                if isinstance(args[1], (Vector, Iterable[Union[float, int]])):
                     rotation = [radians(a) for a in args[1]]
                     quaternion = gp_Quaternion()
                     quaternion.SetEulerAngles(self._rot_order_dict[ordering], *rotation)
@@ -1415,8 +1415,8 @@ class Location:
                 transform.Invert()
         elif len(args) == 3:
             if (
-                isinstance(args[0], (Vector, Iterable[float, int]))
-                and isinstance(args[1], (Vector, Iterable[float, int]))
+                isinstance(args[0], (Vector, Iterable[Union[float, int]]))
+                and isinstance(args[1], (Vector, Iterable[Union[float, int]]))
                 and isinstance(args[2], (int, float))
             ):
                 translation, axis, angle = args
@@ -1424,8 +1424,8 @@ class Location:
                     gp_Ax1(Vector().to_pnt(), Vector(axis).to_dir()), angle * pi / 180.0
                 )
             elif (
-                isinstance(args[0], (Vector, Iterable[float, int]))
-                and isinstance(args[1], (Vector, Iterable[float, int]))
+                isinstance(args[0], (Vector, Iterable[Union[float, int]]))
+                and isinstance(args[1], (Vector, Iterable[Union[float, int]]))
                 and isinstance(args[2], (Extrinsic, Intrinsic))
             ):
                 translation = args[0]
@@ -1460,7 +1460,7 @@ class Location:
             other.wrapped, TopLoc_Location
         ):  # Shape
             result = other.moved(self)
-        elif isinstance(other, Iterable[float, int]) and all(
+        elif isinstance(other, Iterable[Union[float, int]]) and all(
             isinstance(o, Location) for o in other
         ):
             result = [Location(self.wrapped * loc.wrapped) for loc in other]
@@ -1694,7 +1694,7 @@ class Pos(Location):
         """Position by VectorLike"""
 
     @overload
-    def __init__(self, v: Iterable[float, int]):
+    def __init__(self, v: Iterable[Union[float, int]]):
         """Position by Vertex"""
 
     @overload
@@ -1707,7 +1707,7 @@ class Pos(Location):
         if len(args) == 1 and isinstance(args[0], (tuple, Vector)):
             position = list(args[0])
         # Vertex
-        elif len(args) == 1 and isinstance(args[0], Iterable[float, int]):
+        elif len(args) == 1 and isinstance(args[0], Iterable[Union[float, int]]):
             position = list(args[0])
         # Values
         elif 1 <= len(args) <= 3 and all([isinstance(v, (float, int)) for v in args]):
