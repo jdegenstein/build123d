@@ -5087,12 +5087,12 @@ class Edge(Mixin1D, Shape):
             try:
                 if other is not None:
                     if (
-                        self.distance_to(pnt) <= TOLERANCE
-                        and other.distance_to(pnt) <= TOLERANCE
+                        isclose_b(self.distance_to(pnt), 0, abs_tol=TOLERANCE)
+                        and isclose_b(other.distance_to(pnt), 0, abs_tol=TOLERANCE)
                     ):
                         valid_crosses.append(pnt)
                 else:
-                    if self.distance_to(pnt) <= TOLERANCE:
+                    if isclose_b(self.distance_to(pnt), 0, abs_tol=TOLERANCE):
                         valid_crosses.append(pnt)
             except ValueError:
                 pass  # skip invalid points
