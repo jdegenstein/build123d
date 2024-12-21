@@ -16,7 +16,7 @@ authors = [
 ]
 description = "A python CAD programming library"
 readme = "README.md"
-requires-python = ">= 3.10, < 3.13"
+requires-python = ">= 3.10, < 3.14"
 keywords = [
     "3d models",
     "3d printing",
@@ -35,7 +35,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "cadquery-ocp >= 7.7.0",
+    "cadquery-ocp-novtk >= 7.7.0",
     "typing_extensions >= 4.6.0, <5",
     "numpy >= 2, <3",
     "svgpathtools >= 1.5.1, <2",
