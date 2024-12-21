@@ -92,7 +92,6 @@ from build123d.topology import (
     delta,
     unwrap_topods_compound,
 )
-from build123d.jupyter_tools import display
 
 DEG2RAD = math.pi / 180
 RAD2DEG = 180 / math.pi
