@@ -107,8 +107,6 @@ from OCP.GProp import GProp_GProps
 from OCP.Geom import Geom_Line
 from OCP.GeomAPI import GeomAPI_ProjectPointOnSurf
 from OCP.GeomLib import GeomLib_IsPlanarSurface
-from OCP.IVtkOCC import IVtkOCC_Shape, IVtkOCC_ShapeMesher
-from OCP.IVtkVTK import IVtkVTK_ShapeData
 from OCP.Prs3d import Prs3d_IsoAspect
 from OCP.Quantity import Quantity_Color
 from OCP.ShapeAnalysis import ShapeAnalysis_Curve
@@ -155,8 +153,6 @@ from build123d.geometry import (
 from typing_extensions import Self
 
 from typing import Literal
-from vtkmodules.vtkCommonDataModel import vtkPolyData
-from vtkmodules.vtkFiltersCore import vtkPolyDataNormals, vtkTriangleFilter
 
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -1814,62 +1810,6 @@ class Shape(NodeMixin, Generic[TOPODS]):
         )
 
         return self.__class__.cast(result)
-
-    def to_vtk_poly_data(
-        self,
-        tolerance: float | None = None,
-        angular_tolerance: float | None = None,
-        normals: bool = False,
-    ) -> vtkPolyData:
-        """Convert shape to vtkPolyData
-
-        Args:
-          tolerance: float:
-          angular_tolerance: float:  (Default value = 0.1)
-          normals: bool:  (Default value = True)
-
-        Returns: data object in VTK consisting of points, vertices, lines, and polygons
-        """
-        if self.wrapped is None:
-            raise ValueError("Cannot convert an empty shape")
-
-        vtk_shape = IVtkOCC_Shape(self.wrapped)
-        shape_data = IVtkVTK_ShapeData()
-        shape_mesher = IVtkOCC_ShapeMesher()
-
-        drawer = vtk_shape.Attributes()
-        drawer.SetUIsoAspect(Prs3d_IsoAspect(Quantity_Color(), Aspect_TOL_SOLID, 1, 0))
-        drawer.SetVIsoAspect(Prs3d_IsoAspect(Quantity_Color(), Aspect_TOL_SOLID, 1, 0))
-
-        if tolerance:
-            drawer.SetDeviationCoefficient(tolerance)
-
-        if angular_tolerance:
-            drawer.SetDeviationAngle(angular_tolerance)
-
-        shape_mesher.Build(vtk_shape, shape_data)
-
-        vtk_poly_data = shape_data.getVtkPolyData()
-
-        # convert to triangles and split edges
-        t_filter = vtkTriangleFilter()
-        t_filter.SetInputData(vtk_poly_data)
-        t_filter.Update()
-
-        return_value = t_filter.GetOutput()
-
-        # compute normals
-        if normals:
-            n_filter = vtkPolyDataNormals()
-            n_filter.SetComputePointNormals(True)
-            n_filter.SetComputeCellNormals(True)
-            n_filter.SetFeatureAngle(360)
-            n_filter.SetInputData(return_value)
-            n_filter.Update()
-
-            return_value = n_filter.GetOutput()
-
-        return return_value
 
     def transform_geometry(self, t_matrix: Matrix) -> Self:
         """Apply affine transform
