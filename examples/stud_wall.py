@@ -29,11 +29,10 @@ license:
 
 from build123d import *
 from ocp_vscode import show
-from typing import Union
+# [Code]
 import copy
 
 
-# [Code]
 class Stud(BasePartObject):
     """Part Object: Stud
 
@@ -57,7 +56,7 @@ class Stud(BasePartObject):
         width: float = 3.5 * IN,
         thickness: float = 1.5 * IN,
         rotation: RotationLike = (0, 0, 0),
-        align: Union[None, Align, tuple[Align, Align, Align]] = (
+        align: None | Align | tuple[Align, Align, Align] = (
             Align.CENTER,
             Align.CENTER,
             Align.MIN,
