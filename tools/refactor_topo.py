@@ -247,7 +247,7 @@ def sort_class_methods_by_convention(class_def: cst.ClassDef) -> cst.ClassDef:
 
 def extract_methods_and_properties(
     class_def: cst.ClassDef,
-) -> tuple[List[cst.FunctionDef], List[List[cst.FunctionDef]]]:
+) -> tuple[list[cst.FunctionDef], list[list[cst.FunctionDef]]]:
     """
     Extract methods and properties (with setters grouped together) from a class.
 
@@ -299,8 +299,8 @@ def extract_methods_and_properties(
 
 
 def order_methods_by_convention(
-    methods: List[cst.FunctionDef], properties: List[List[cst.FunctionDef]]
-) -> List[cst.BaseStatement]:
+    methods: list[cst.FunctionDef], properties: list[list[cst.FunctionDef]]
+) -> list[cst.BaseStatement]:
     """
     Order methods and properties in a class by Python's conventional order with section headers.
 
@@ -374,7 +374,7 @@ def order_methods_by_convention(
     sorted_instance_methods = sorted(instance_methods, key=lambda m: method_key(m))
 
     # Combine all sections with headers
-    ordered_sections: List[cst.BaseStatement] = []
+    ordered_sections: list[cst.BaseStatement] = []
 
     if init_methods:
         ordered_sections.append(
@@ -417,7 +417,7 @@ def order_methods_by_convention(
 
 class ImportCollector(cst.CSTVisitor):
     def __init__(self):
-        self.imports: Set[str] = set()
+        self.imports: set[str] = set()
 
     def visit_Import(self, node: cst.Import) -> None:
         for name in node.names:
@@ -432,9 +432,9 @@ class ImportCollector(cst.CSTVisitor):
 
 
 class ClassExtractor(cst.CSTVisitor):
-    def __init__(self, class_names_to_extract: List[str]):
+    def __init__(self, class_names_to_extract: list[str]):
         self.class_names = class_names_to_extract
-        self.extracted_classes: Dict[str, cst.ClassDef] = {}
+        self.extracted_classes: dict[str, cst.ClassDef] = {}
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         if node.name.value in self.class_names:
@@ -443,7 +443,7 @@ class ClassExtractor(cst.CSTVisitor):
 
 class ClassMethodExtractor(cst.CSTVisitor):
     def __init__(self):
-        self.class_methods: Dict[str, List[cst.FunctionDef]] = {}
+        self.class_methods: dict[str, list[cst.FunctionDef]] = {}
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         class_name = node.name.value
@@ -459,7 +459,7 @@ class ClassMethodExtractor(cst.CSTVisitor):
 
 class MixinClassExtractor(cst.CSTVisitor):
     def __init__(self):
-        self.extracted_classes: Dict[str, cst.ClassDef] = {}
+        self.extracted_classes: dict[str, cst.ClassDef] = {}
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         if "Mixin" in node.name.value:
@@ -468,7 +468,7 @@ class MixinClassExtractor(cst.CSTVisitor):
 
 class StandaloneFunctionAndVariableCollector(cst.CSTVisitor):
     def __init__(self):
-        self.functions: List[cst.FunctionDef] = []
+        self.functions: list[cst.FunctionDef] = []
         self.current_scope_level = 0  # Track nesting level
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
@@ -483,14 +483,14 @@ class StandaloneFunctionAndVariableCollector(cst.CSTVisitor):
         if self.current_scope_level == 0:
             self.functions.append(node)
 
-    def get_sorted_functions(self) -> List[cst.FunctionDef]:
+    def get_sorted_functions(self) -> list[cst.FunctionDef]:
         return sorted(self.functions, key=lambda func: func.name.value)
 
 
 class GlobalVariableExtractor(cst.CSTVisitor):
     def __init__(self):
         # Store the global variable assignments
-        self.global_variables: List[cst.Assign] = []
+        self.global_variables: list[cst.Assign] = []
 
     def visit_Module(self, node: cst.Module) -> None:
         # Visit all assignments at the module level
@@ -502,9 +502,9 @@ class GlobalVariableExtractor(cst.CSTVisitor):
 
 
 class ClassMethodExtractor(cst.CSTVisitor):
-    def __init__(self, methods_to_convert: List[str]):
+    def __init__(self, methods_to_convert: list[str]):
         self.methods_to_convert = methods_to_convert
-        self.extracted_methods: List[cst.FunctionDef] = []
+        self.extracted_methods: list[cst.FunctionDef] = []
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         # Extract the class name to append it to the function name
@@ -533,8 +533,8 @@ class ClassMethodExtractor(cst.CSTVisitor):
 
 def write_topo_class_files(
     source_tree: cst.Module,
-    extracted_classes: Dict[str, cst.ClassDef],
-    imports: Set[str],
+    extracted_classes: dict[str, cst.ClassDef],
+    imports: set[str],
     output_dir: Path,
 ) -> None:
     """Write files for each group of classes:"""

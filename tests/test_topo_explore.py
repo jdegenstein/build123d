@@ -24,7 +24,7 @@ class DirectApiTestCase(unittest.TestCase):
         first: tuple[float, ...],
         second: tuple[float, ...],
         places: int,
-        msg: Optional[str] = None,
+        msg: str | None = None,
     ):
         """Check Tuples"""
         self.assertEqual(len(second), len(first))
@@ -32,7 +32,7 @@ class DirectApiTestCase(unittest.TestCase):
             self.assertAlmostEqual(i, j, places, msg=msg)
 
     def assertVectorAlmostEquals(
-        self, first: Vector, second: VectorLike, places: int, msg: Optional[str] = None
+        self, first: Vector, second: VectorLike, places: int, msg: str | None = None
     ):
         second_vector = Vector(second)
         self.assertAlmostEqual(first.X, second_vector.X, places, msg=msg)

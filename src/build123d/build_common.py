@@ -321,7 +321,7 @@ class Builder(ABC):
 
     @classmethod
     def _get_context(
-        cls: Type[B],
+        cls: type[B],
         caller: Builder | Shape | Joint | str | None = None,
         log: bool = True,
     ) -> B | None:
@@ -377,7 +377,7 @@ class Builder(ABC):
         if mode != Mode.PRIVATE and len(objects) > 0:
             # Typed dictionary: keys are classes, values are lists of instances of those classes
             typed: dict[
-                Type[Edge | Wire | Face | Solid | Compound],
+                type[Edge | Wire | Face | Solid | Compound],
                 list[Edge | Wire | Face | Solid | Compound],
             ] = {cls: [] for cls in [Edge, Wire, Face, Solid, Compound]}
             for cls in [Edge, Wire, Face, Solid, Compound]:
@@ -740,7 +740,7 @@ class Builder(ABC):
 
     def _shapes(
         self,
-        obj_type: Type[Vertex] | Type[Edge] | Type[Face] | Type[Solid] | None = None,
+        obj_type: type[Vertex] | type[Edge] | type[Face] | type[Solid] | None = None,
     ) -> ShapeList:
         """Extract Shapes"""
         obj_type = self._shape if obj_type is None else obj_type

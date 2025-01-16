@@ -120,7 +120,7 @@ class DirectApiTestCase(unittest.TestCase):
         first: tuple[float, ...],
         second: tuple[float, ...],
         places: int,
-        msg: Optional[str] = None,
+        msg: str | None = None,
     ):
         """Check Tuples"""
         self.assertEqual(len(second), len(first))
@@ -128,7 +128,7 @@ class DirectApiTestCase(unittest.TestCase):
             self.assertAlmostEqual(i, j, places, msg=msg)
 
     def assertVectorAlmostEquals(
-        self, first: Vector, second: VectorLike, places: int, msg: Optional[str] = None
+        self, first: Vector, second: VectorLike, places: int, msg: str | None = None
     ):
         second_vector = Vector(second)
         self.assertAlmostEqual(first.X, second_vector.X, places, msg=msg)
@@ -1966,7 +1966,7 @@ class TestLocation(DirectApiTestCase):
             outfile.write(json_object)
 
         # Reading from sample.json
-        with open("sample.json", "r") as infile:
+        with open("sample.json") as infile:
             read_json = json.load(infile, object_hook=LocationEncoder.location_hook)
 
         # Validate locations
@@ -3412,7 +3412,7 @@ class TestShape(DirectApiTestCase):
         """
         sphere = Solid.make_sphere(1)
         divider = Solid.make_box(0.1, 3, 3, Plane(origin=(-0.05, -1.5, -1.5)))
-        positive_half, negative_half = [s.clean() for s in sphere.cut(divider).solids()]
+        positive_half, negative_half = (s.clean() for s in sphere.cut(divider).solids())
         self.assertGreater(abs(positive_half.volume - negative_half.volume), 0, 1)
 
     def test_clean_empty(self):

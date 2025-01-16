@@ -53,7 +53,7 @@ class DirectApiTestCase(unittest.TestCase):
         first: tuple[float, ...],
         second: tuple[float, ...],
         places: int,
-        msg: Optional[str] = None,
+        msg: str | None = None,
     ):
         """Check Tuples"""
         self.assertEqual(len(second), len(first))
@@ -61,7 +61,7 @@ class DirectApiTestCase(unittest.TestCase):
             self.assertAlmostEqual(i, j, places, msg=msg)
 
     def assertVectorAlmostEquals(
-        self, first: Vector, second: VectorLike, places: int, msg: Optional[str] = None
+        self, first: Vector, second: VectorLike, places: int, msg: str | None = None
     ):
         second_vector = Vector(second)
         self.assertAlmostEqual(first.X, second_vector.X, places, msg=msg)
@@ -73,7 +73,7 @@ class TestExportStep(DirectApiTestCase):
     def test_export_step_solid(self):
         b = Box(1, 1, 1).locate(Pos(-1, -2, -3))
         self.assertTrue(export_step(b, "box.step"))
-        with open("box.step", "r") as file:
+        with open("box.step") as file:
             step_data = file.read()
         os.remove("box.step")
         self.assertEqual(step_data.count("VERTEX_POINT"), len(b.vertices()))
@@ -88,7 +88,7 @@ class TestExportStep(DirectApiTestCase):
         assembly.label = "assembly"
         assembly.color = Color(1, 0, 0)
         self.assertTrue(export_step(assembly, "assembly.step", unit=Unit.IN))
-        with open("assembly.step", "r") as file:
+        with open("assembly.step") as file:
             step_data = file.read()
         os.remove("assembly.step")
         self.assertNotEqual(step_data.find("DRAUGHTING_PRE_DEFINED_COLOUR('red')"), -1)
@@ -107,7 +107,7 @@ class TestExportStep(DirectApiTestCase):
         test_sketch.label = "sketch"
         test_sketch.color = Color("red")
         self.assertTrue(export_step(test_sketch, "sketch.step"))
-        with open("sketch.step", "r") as file:
+        with open("sketch.step") as file:
             step_data = file.read()
         os.remove("sketch.step")
         self.assertEqual(step_data.count("VERTEX_POINT"), len(test.vertices()))
@@ -122,7 +122,7 @@ class TestExportStep(DirectApiTestCase):
         test_line.label = "curve"
         test_line.color = Color("red")
         self.assertTrue(export_step(test_line, "curve.step"))
-        with open("curve.step", "r") as file:
+        with open("curve.step") as file:
             step_data = file.read()
         os.remove("curve.step")
         self.assertEqual(step_data.count("LINE"), len(test.edges()))
@@ -151,7 +151,7 @@ class TestExportGltf(DirectApiTestCase):
         box.color = Color(0, 0, 1)
         box.label = "box"
         self.assertTrue(export_gltf(box, "box.gltf", binary=False))
-        with open("box.gltf", "r") as file:
+        with open("box.gltf") as file:
             gltf_json_str = file.read()
         gltf_json = json.loads(gltf_json_str)
         self.assertEqual(gltf_json["meshes"][0]["name"], box.label)

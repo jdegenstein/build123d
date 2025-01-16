@@ -98,7 +98,7 @@ class PlatonicSolid(BasePartObject):
         face_count: Literal[4, 6, 8, 12, 20],
         diameter: float = 1.0,
         rotation: RotationLike = (0, 0, 0),
-        align: Union[None, Align, tuple[Align, Align, Align]] = None,
+        align: None | Align | tuple[Align, Align, Align] = None,
         mode: Mode = Mode.ADD,
     ):
         try:

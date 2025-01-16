@@ -1,5 +1,7 @@
 from os import fsdecode, fsencode
-from typing import Union, Iterable
+from typing import Union
+
+from collections.abc import Iterable
 import math
 from pathlib import Path
 import unittest
@@ -58,14 +60,14 @@ class ExportersTestCase(unittest.TestCase):
 
     @staticmethod
     def basic_svg_export(
-        shape: Union[Shape, Iterable[Shape]], filename: str, reverse: bool = False
+        shape: Shape | Iterable[Shape], filename: str, reverse: bool = False
     ):
         svg = ExportSVG()
         svg.add_shape(shape, reverse_wires=reverse)
         svg.write(filename)
 
     @staticmethod
-    def basic_dxf_export(shape: Union[Shape, Iterable[Shape]], filename: str):
+    def basic_dxf_export(shape: Shape | Iterable[Shape], filename: str):
         dxf = ExportDXF()
         dxf.add_shape(shape)
         dxf.write(filename)

@@ -1849,8 +1849,8 @@ class Edge(Mixin1D, Shape[TopoDS_Edge]):
             points_sets.append(set(intersection_points))
 
         # Find common end points
-        self_end_points = set(Vector(v) for v in self.vertices())
-        edge_end_points = set(Vector(v) for edge in edges for v in edge.vertices())
+        self_end_points = {Vector(v) for v in self.vertices()}
+        edge_end_points = {Vector(v) for edge in edges for v in edge.vertices()}
         common_end_points = set.intersection(self_end_points, edge_end_points)
 
         # Find any edge / plane intersection points & edges

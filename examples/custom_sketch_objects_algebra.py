@@ -7,7 +7,7 @@ class Club(Sketch):
     def __init__(
         self,
         height: float,
-        align: Union[Align, tuple[Align, Align]] = None,
+        align: Align | tuple[Align, Align] = None,
     ):
         l0 = Line((0, -188), (76, -188))
         b0 = Bezier(l0 @ 1, (61, -185), (33, -173), (17, -81))
@@ -27,7 +27,7 @@ class Spade(Sketch):
     def __init__(
         self,
         height: float,
-        align: Union[Align, tuple[Align, Align]] = None,
+        align: Align | tuple[Align, Align] = None,
     ):
         b0 = Bezier((0, 198), (6, 190), (41, 127), (112, 61))
         b1 = Bezier(b0 @ 1, (242, -72), (114, -168), (11, -105))
@@ -46,7 +46,7 @@ class Heart(Sketch):
     def __init__(
         self,
         height: float,
-        align: Union[Align, tuple[Align, Align]] = None,
+        align: Align | tuple[Align, Align] = None,
     ):
         b1 = Bezier((0, 146), (20, 169), (67, 198), (97, 198))
         b2 = Bezier(b1 @ 1, (125, 198), (151, 186), (168, 167))
@@ -66,7 +66,7 @@ class Diamond(Sketch):
     def __init__(
         self,
         height: float,
-        align: Union[Align, tuple[Align, Align]] = None,
+        align: Align | tuple[Align, Align] = None,
     ):
         diamond = Bezier((135, 0), (94, 69), (47, 134), (0, 198))
         diamond += mirror(diamond, Plane.XZ)
