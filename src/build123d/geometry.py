@@ -880,7 +880,18 @@ class Axis(metaclass=AxisMeta):
             # Solve the system of equations to find the intersection
             system_of_equations = np.array([d1, -d2, np.cross(d1, d2)]).T
             origin_diff = p2 - p1
-            t1, t2, _ = np.linalg.lstsq(system_of_equations, origin_diff, rcond=None)[0]
+            try:
+                t1, t2, d = np.linalg.solve(system_of_equations, origin_diff)
+            except np.linalg.LinAlgError:
+                return None  # The lines do not intersect
+
+            if abs(d * cross_d1_d2_norm) > TOLERANCE:
+                return None  # The lines do not intersect
+
+            # these lines only allow intersections on the positive axes sides
+            # TODO: consider enabling this with an optional parameter
+            # if t1 < 0 or t2 < 0:
+            #     return None
 
             # Calculate the intersection point
             intersection_point = p1 + t1 * d1
