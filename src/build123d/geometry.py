@@ -867,35 +867,40 @@ class Axis(metaclass=AxisMeta):
         if axis is not None:
             if self.is_coaxial(axis):
                 return self
+            else:
+                # Extract points and directions to numpy arrays
+                p1 = np.array([*self.position])
+                d1 = np.array([*self.direction])
+                p2 = np.array([*axis.position])
+                d2 = np.array([*axis.direction])
 
-            if self.is_skew(axis):
-                return None
+                # Compute the cross product of directions
+                cross_d1_d2 = np.cross(d1, d2)
+                cross_d1_d2_norm = np.linalg.norm(cross_d1_d2)
 
-            # Extract points and directions to numpy arrays
-            p1 = np.array([*self.position])
-            d1 = np.array([*self.direction])
-            p2 = np.array([*axis.position])
-            d2 = np.array([*axis.direction])
+                if cross_d1_d2_norm < TOLERANCE:
+                    # The directions are parallel
+                    return None
 
-            # Solve the system of equations to find the intersection
-            system_of_equations = np.array([d1, -d2, np.cross(d1, d2)]).T
-            origin_diff = p2 - p1
-            try:
-                t1, t2, d = np.linalg.solve(system_of_equations, origin_diff)
-            except np.linalg.LinAlgError:
-                return None  # The lines do not intersect
+                # Solve the system of equations to find the intersection
+                system_of_equations = np.array([d1, -d2, cross_d1_d2]).T
+                origin_diff = p2 - p1
+                try:
+                    t1, t2, d = np.linalg.solve(system_of_equations, origin_diff)
+                except np.linalg.LinAlgError:
+                    return None  # The lines do not intersect
 
-            if abs(d * cross_d1_d2_norm) > TOLERANCE:
-                return None  # The lines do not intersect
+                if abs(d * cross_d1_d2_norm) > TOLERANCE:
+                    return None  # The lines do not intersect
 
-            # these lines only allow intersections on the positive axes sides
-            # TODO: consider enabling this with an optional parameter
-            # if t1 < 0 or t2 < 0:
-            #     return None
+                # these lines only allow intersections on the positive axes sides
+                # TODO: consider enabling this with an optional parameter
+                # if t1 < 0 or t2 < 0:
+                #     return None
 
-            # Calculate the intersection point
-            intersection_point = p1 + t1 * d1
-            return Vector(*intersection_point)
+                # Calculate the intersection point
+                intersection_point = p1 + t1 * d1
+                return Vector(*intersection_point)
 
         if plane is not None:
             return plane.intersect(self)
