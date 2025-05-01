@@ -50,6 +50,7 @@ import copy
 import itertools
 import warnings
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from typing import (
     cast as tcast,
     Any,
@@ -2935,7 +2936,7 @@ def _sew_topods_faces(faces: Iterable[TopoDS_Face]) -> TopoDS_Shape:
     shell_builder.Perform()
     return downcast(shell_builder.SewedShape())
 
-
+@lru_cache(maxsize=128) # default is 128
 def _topods_entities(shape: TopoDS_Shape, topo_type: Shapes) -> list[TopoDS_Shape]:
     """Return the TopoDS_Shapes of topo_type from this TopoDS_Shape"""
     out = {}  # using dict to prevent duplicates
