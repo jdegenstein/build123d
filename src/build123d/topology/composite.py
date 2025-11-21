@@ -106,7 +106,7 @@ from build123d.geometry import (
     VectorLike,
     logger,
 )
-
+import logging
 from .one_d import Edge, Wire, Mixin1D
 from .shape_core import (
     Shape,
@@ -884,12 +884,23 @@ class Compound(Mixin3D[TopoDS_Compound]):
 
     def _post_attach_children(self, children: Iterable[Shape]):
         """Method call after attaching `children`."""
-        if children:
-            kids = ",".join([child.label for child in children])
-            logger.debug("Adding children %s to %s", kids, self.label)
-            self.wrapped = _make_topods_compound_from_shapes(
-                [c.wrapped for c in self.children]
-            )
+        # 1. Safety check for empty updates
+        if not children:
+            return
+        if logger.isEnabledFor(logging.DEBUG):
+            children_list = list(children)
+            count = len(children_list)
+            if count > 10:
+                # For large batches, just log the count. 
+                # Constructing a string of 1000+ labels is expensive and unreadable.
+                logger.debug("Adding %d children to %s", count, self.label)
+            else:
+                # For small batches, log the specific labels.
+                kids = ",".join([child.label for child in children_list])
+                logger.debug("Adding children %s to %s", kids, self.label)
+        self.wrapped = _make_topods_compound_from_shapes(
+            [c.wrapped for c in self.children]
+        )
         # else:
         #     logger.debug("Adding no children to %s", self.label)
 
@@ -906,8 +917,9 @@ class Compound(Mixin3D[TopoDS_Compound]):
     def _post_detach_children(self, children):
         """Method call before detaching `children`."""
         if children:
-            kids = ",".join([child.label for child in children])
-            logger.debug("Removing children %s from %s", kids, self.label)
+            if logger.isEnabledFor(logging.DEBUG):
+                kids = ",".join([child.label for child in children])
+                logger.debug("Removing children %s from %s", kids, self.label)
             self.wrapped = _make_topods_compound_from_shapes(
                 [c.wrapped for c in self.children]
             )
