@@ -332,14 +332,14 @@ class Shape(NodeMixin, Generic[TOPODS]):
     @children.setter
     def children(self, values: Iterable[Shape]):
         """
-        Optimized children setter. 
+        Optimized children setter.
         Bypasses anytree's O(n^2) validation (duplicate/loop checks) for massive speedups.
         """
         self._suppress_update = True
         try:
             # 1. Standardize input to a LIST (Critical: AnyTree requires a mutable list internally)
             new_children = list(values)
-            
+
             # 2. Access internal AnyTree storage (Name mangling required)
             children_storage = "_NodeMixin__children"
             parent_storage = "_NodeMixin__parent"
@@ -349,15 +349,15 @@ class Shape(NodeMixin, Generic[TOPODS]):
                 old_children = getattr(self, children_storage)
                 for child in old_children:
                     setattr(child, parent_storage, None)
-            
+
             # 4. Set new children LIST (Skipping set() validation)
             setattr(self, children_storage, new_children)
-            
+
             # 5. Attach new children (Manual NodeMixin logic)
             for child in new_children:
                 # Fast link to self
                 setattr(child, parent_storage, self)
-                
+
         finally:
             self._suppress_update = False
             # Trigger the geometry rebuild exactly once
@@ -383,9 +383,9 @@ class Shape(NodeMixin, Generic[TOPODS]):
 
     def _update_geometry(self):
         """
-        Virtual method. 
-        By default, Shapes (Solids, Faces, etc.) do NOT change their 
-        geometry when children are added. 
+        Virtual method.
+        By default, Shapes (Solids, Faces, etc.) do NOT change their
+        geometry when children are added.
         """
         pass
 
