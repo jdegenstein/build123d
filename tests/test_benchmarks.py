@@ -2,8 +2,10 @@ import pytest
 import sys
 from build123d import *
 from pathlib import Path
-
+import copy
+import itertools
 from unittest.mock import Mock
+
 mock_module = Mock()
 mock_module.show = Mock()
 mock_module.show_object = Mock()
@@ -24,78 +26,92 @@ def _read_docs_ttt_code(name):
 def test_ppp_0101(benchmark):
     def model():
         exec(_read_docs_ttt_code("ppp0101"))
+
     benchmark(model)
 
 
 def test_ppp_0102(benchmark):
     def model():
         exec(_read_docs_ttt_code("ppp0102"))
+
     benchmark(model)
 
 
 def test_ppp_0103(benchmark):
     def model():
         exec(_read_docs_ttt_code("ppp0103"))
+
     benchmark(model)
 
 
 def test_ppp_0104(benchmark):
     def model():
         exec(_read_docs_ttt_code("ppp0104"))
+
     benchmark(model)
 
 
 def test_ppp_0105(benchmark):
     def model():
         exec(_read_docs_ttt_code("ppp0105"))
+
     benchmark(model)
 
 
 def test_ppp_0106(benchmark):
     def model():
         exec(_read_docs_ttt_code("ppp0106"))
+
     benchmark(model)
 
 
 def test_ppp_0107(benchmark):
     def model():
         exec(_read_docs_ttt_code("ppp0107"))
+
     benchmark(model)
 
 
 def test_ppp_0108(benchmark):
     def model():
         exec(_read_docs_ttt_code("ppp0108"))
+
     benchmark(model)
 
 
 def test_ppp_0109(benchmark):
     def model():
         exec(_read_docs_ttt_code("ppp0109"))
+
     benchmark(model)
 
 
 def test_ppp_0110(benchmark):
     def model():
         exec(_read_docs_ttt_code("ppp0110"))
+
     benchmark(model)
 
 
 def test_ttt_23_02_02(benchmark):
     def model():
         exec(_read_docs_ttt_code("23-02-02-sm_hanger"))
+
     benchmark(model)
+
 
 def test_ttt_23_T_24(benchmark):
     def model():
         exec(_read_docs_ttt_code("23-t-24-curved_support"))
+
     benchmark(model)
+
 
 def test_ttt_24_SPO_06(benchmark):
     def model():
         exec(_read_docs_ttt_code("24-SPO-06-Buffer_Stand"))
-    benchmark(model)
 
+    benchmark(model)
 
 
 @pytest.mark.parametrize("test_input", [100, 1000, 10000, 100000])
@@ -110,3 +126,21 @@ def test_mesher_benchmark(benchmark, test_input):
         assert len(mesher[1]) == int(i / 3)
 
     benchmark(test_create_3mf_mesh, test_input)
+
+
+def test_compound_many_children(benchmark):
+    def model():
+        num_xyz = 12
+        locs = [
+            Pos(1.1 * x, 1.1 * y, 1.1 * z)
+            for x, y, z in itertools.product(
+                range(num_xyz), range(num_xyz), range(num_xyz)
+            )
+        ]
+        box = Box(1, 1, 1)
+        boxes = [loc * copy.copy(box) for loc in locs]
+        compound = Compound(children=boxes)
+        assert len(boxes) == num_xyz**3
+        # TODO: add more asserts
+
+    benchmark(model)
