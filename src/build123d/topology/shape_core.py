@@ -294,6 +294,9 @@ class Shape(NodeMixin, Generic[TOPODS]):
         self.label = label
         self.color = color
 
+        # Flag to suppress expensive geometry rebuilds during batch operations
+        self._suppress_update = False
+
         # parent must be set following children as post install accesses children
         self.parent = parent
 
@@ -320,6 +323,71 @@ class Shape(NodeMixin, Generic[TOPODS]):
     @abstractmethod
     def _dim(self) -> int | None:
         """Dimension of the object"""
+
+    @property
+    def children(self):
+        """Override anytree children getter."""
+        return super().children
+
+    @children.setter
+    def children(self, values: Iterable[Shape]):
+        """
+        Optimized children setter. 
+        Bypasses anytree's O(n^2) validation (duplicate/loop checks) for massive speedups.
+        """
+        self._suppress_update = True
+        try:
+            # 1. Standardize input to a LIST (Critical: AnyTree requires a mutable list internally)
+            new_children = list(values)
+            
+            # 2. Access internal AnyTree storage (Name mangling required)
+            children_storage = "_NodeMixin__children"
+            parent_storage = "_NodeMixin__parent"
+
+            # 3. Detach existing children (Manual NodeMixin logic)
+            if hasattr(self, children_storage):
+                old_children = getattr(self, children_storage)
+                for child in old_children:
+                    setattr(child, parent_storage, None)
+            
+            # 4. Set new children LIST (Skipping set() validation)
+            setattr(self, children_storage, new_children)
+            
+            # 5. Attach new children (Manual NodeMixin logic)
+            for child in new_children:
+                # Fast link to self
+                setattr(child, parent_storage, self)
+                
+        finally:
+            self._suppress_update = False
+            # Trigger the geometry rebuild exactly once
+            self._update_geometry()
+
+    @children.deleter
+    def children(self):
+        """
+        Delegate deletion to NodeMixin (equivalent to setting children = ()).
+        """
+        self._suppress_update = True
+        try:
+            NodeMixin.children.__delete__(self)
+        finally:
+            self._suppress_update = False
+            self._update_geometry()
+
+    def _post_attach_children(self, children: Iterable[Shape]):
+        """Called by anytree after a child is attached via `child.parent = self`."""
+        if self._suppress_update:
+            return
+        self._update_geometry()
+
+    def _update_geometry(self):
+        """
+        Virtual method. 
+        By default, Shapes (Solids, Faces, etc.) do NOT change their 
+        geometry when children are added. 
+        """
+        pass
 
     @property
     def area(self) -> float:

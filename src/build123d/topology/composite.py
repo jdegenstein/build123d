@@ -189,6 +189,31 @@ class Compound(Mixin3D[TopoDS_Compound]):
         """The dimension of the shapes within the Compound - None if inconsistent"""
         return topods_dim(self.wrapped)
 
+    def _update_geometry(self):
+        """
+        Rebuild the internal TopoDS_Compound from the children.
+        This runs once per batch assignment.
+        """
+        # Safety check: if no children, maybe handle as empty compound or return
+        if not self.children:
+            # Optional: Decide if an empty compound should be null or an empty TopoDS
+            return
+
+        # 1. OPTIMIZED LOGGING
+        if logger.isEnabledFor(logging.DEBUG):
+            count = len(self.children)
+            if count > 10:
+                logger.debug("Rebuilding Compound with %d children", count)
+            else:
+                kids = ",".join([child.label for child in self.children])
+                logger.debug("Rebuilding Compound with children: %s", kids)
+
+        # 2. GEOMETRY RECONSTRUCTION
+        # Note: Ensure _make_topods_compound_from_shapes is imported
+        self.wrapped = _make_topods_compound_from_shapes(
+            [c.wrapped for c in self.children]
+        )
+
     @property
     def volume(self) -> float:
         """volume - the volume of this Compound"""
