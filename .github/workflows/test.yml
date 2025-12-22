@@ -13,15 +13,28 @@ jobs:
           # "3.12",
           "3.13",
           ]
-        os: [macos-15-intel, macos-14, ubuntu-latest, windows-latest]
+        # os: [macos-15-intel, macos-14, ubuntu-latest, windows-latest, ubuntu-22.04-arm]
+        os: [ubuntu-22.04-arm]
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup/
-        with:
-          python-version: ${{ matrix.python-version }}
-          optional-dependencies: "development"
-      - name: test
-        run: |
-          python -m pytest -n auto --benchmark-disable
+    - uses: actions/checkout@v4
+      # - uses: ./.github/actions/setup/
+      #   with:
+      #     python-version: ${{ matrix.python-version }}
+      #     optional-dependencies: "development"
+    - name: Setup Python
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: false
+        python-version: "3.13"
+    - name: Install Requirements
+      shell: bash
+      run: |
+        uv pip install https://github.com/CadQuery/ocp-build-system/releases/download/v7.9.2.0/cadquery_ocp-7.9.2.0-cp313-cp313-manylinux_2_31_aarch64.whl
+        uv pip install anytree asttokens colorama decorator executing ezdxf fonttools ipython ipython-pygments-lexers jedi matplotlib-inline mpmath numpy ocp-gordon ocpsvg parso prompt-toolkit pure-eval pygments pyparsing scipy stack-data svgelements svgpathtools svgwrite sympy traitlets trianglesolver typing-extensions wcwidth webcolors --no-deps
+        uv pip install -e .[development] --no-deps
+
+    - name: test
+      run: |
+        python -m pytest -n auto --benchmark-disable
