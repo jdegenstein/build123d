@@ -31,7 +31,7 @@ jobs:
     - name: Install Requirements
       shell: bash
       run: |
-        uv pip install https://github.com/CadQuery/ocp-build-system/releases/download/v7.9.2.0/cadquery_ocp-7.9.2.0-cp313-cp313-manylinux_2_31_aarch64.whl https://github.com/CadQuery/ocp-build-system/releases/download/v7.9.2.0/cadquery_ocp_proxy-7.9.2.0-py3-none-any.whl
+        uv pip install https://github.com/CadQuery/ocp-build-system/releases/download/v7.9.2.0/cadquery_ocp-7.9.2.0-cp313-cp313-manylinux_2_31_aarch64.whl https://github.com/CadQuery/ocp-build-system/releases/download/v7.9.2.0/cadquery_ocp_proxy-7.9.2.0-py3-none-any.whl https://github.com/CadQuery/ocp-build-system/blob/v7.9/pypi/lib3mf-2.4.1-py3-none-manylinux_2_31_aarch64.whl
         uv pip install anytree asttokens colorama decorator executing ezdxf fonttools ipython ipython-pygments-lexers jedi matplotlib-inline mpmath numpy ocp-gordon ocpsvg parso prompt-toolkit pure-eval pygments pyparsing scipy stack-data svgelements svgpathtools svgwrite sympy traitlets trianglesolver typing-extensions wcwidth webcolors --no-deps
         uv pip install . --no-deps
         uv pip install black mypy pylint pytest==8.4.2 pytest-benchmark pytest-cov pytest-xdist wheel
