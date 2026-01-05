@@ -30,7 +30,7 @@ jobs:
           name: benchmark-results-${{ matrix.os }}
           path: results.csv
 
-regression-check:
+  regression-check:
     name: Check for Performance Regressions
     needs: benchmarks
     if: github.event_name == 'pull_request'
