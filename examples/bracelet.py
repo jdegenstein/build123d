@@ -6,17 +6,17 @@ by:   Gumyr
 date: January 7, 2026
 
 desc:
-      This model is a good “stress test” for OCCT because most of the final boundary
+      This model is a good "stress test" for OCCT because most of the final boundary
       surfaces are *freeform* (not analytic planes/cylinders/spheres). The geometry
       is assembled from:
         - a swept center section (using a curved solid end-face as the sweep profile)
-        - two freeform “tip caps” built as Gordon surfaces (network of curves)
+        - two freeform "tip caps" built as Gordon surfaces (network of curves)
         - an optional embossed text label projected onto a curved solid
         - alignment holes for splitting/printing/assembly
 
       Key techniques demonstrated:
         - using location_at/position_at/tangent (%) to extract local frames & tangents
-        - projecting curves onto a non-planar surface to create “true” 3D guide curves
+        - projecting curves onto a non-planar surface to create "true" 3D guide curves
         - Gordon surfaces to build high-quality doubly-curved skins
         - projecting faces (text) onto a complex solid and thickening them
 
@@ -36,8 +36,9 @@ from ocp_vscode import show
 radii, width, thickness, opening_angle, label_str = (45, 30), 25, 5, 80, "build123d"
 
 # Step 1: Create an elliptical arc defining the *centerline* of the bracelet.
-# The arc is truncated to leave an opening (the “gap” where the bracelet goes on).
-# Angles are in degrees; 270° points downward, which keeps the opening centered at the bottom.
+# The arc is truncated to leave an opening (the "gap" where the bracelet goes on).
+# Angles are in degrees; 270-degrees points downward, which keeps the opening
+# centered at the bottom.
 center_arc = EllipticalCenterArc(
     (0, 0), *radii, 270 + opening_angle / 2, 270 - opening_angle / 2
 )
@@ -47,13 +48,13 @@ center_arc = EllipticalCenterArc(
 # curve-network complexity when building the freeform tip.
 #
 # location_at(1) returns a local coordinate frame at the arc end (tangent-aware).
-# x_dir is chosen so the section’s local “X” is well-defined and stable.
+# x_dir is chosen so the section's local "X" is well-defined and stable.
 end_center_arc = center_arc.location_at(1, x_dir=(0, 0, 1))
 half_x_section = EllipticalCenterArc((0, 0), width / 2, thickness / 2, 90, 270).locate(
     end_center_arc
 )
 
-# Step 3: Create a doubly-curved “tip edge” curve.
+# Step 3: Create a doubly-curved "tip edge" curve.
 # The tip edge must live in 3D and conform to the outside of the bracelet.
 # To do that, we:
 #   1) create a surface by extruding the center_arc into a sheet (a ribbon surface)
@@ -74,13 +75,13 @@ tip_arc = planar_tip_arc.project_to_shape(center_surface, -normal_at_tip_center)
 
 # Step 4: Build the tip as a Gordon surface (a surface fit through a curve network).
 # Gordon surfaces are ideal when:
-#   - you don’t have an obvious analytic surface
-#   - curvature changes in two directions (doubly-curved “cap”)
+#   - you don't have an obvious analytic surface
+#   - curvature changes in two directions (doubly-curved "cap")
 #   - you can define a consistent set of profile curves + guide curves
 #
 # Here:
-#   - profiles define “across the tip” shape (section -> bulged spline -> mirrored section)
-#   - guides define “along the tip” rails (start point -> projected 3D arc -> end point)
+#   - profiles define "across the tip" shape (section -> bulged spline -> mirrored section)
+#   - guides define "along the tip" rails (start point -> projected 3D arc -> end point)
 #
 # Tangents are used to encourage smoothness where the tip joins the swept center section.
 profile = Spline(
@@ -95,7 +96,7 @@ tip_surface = Face.make_gordon_surface(
 )
 
 # Step 5: Close the tip surface into a watertight Solid.
-# tip_surface is the outer “skin”; we create a side face from its boundary wire
+# tip_surface is the outer "skin"; we create a side face from its boundary wire
 # and make a shell, then a solid.
 tip_side = Face(tip_surface.wire())
 tip = Solid(Shell([tip_side, tip_surface]))
