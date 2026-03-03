@@ -181,13 +181,15 @@ class FontManager:
         folder_path = Path(path)
 
         if folder_path.exists():
-            for ext in ["*.ttf", "*.otf", "*.ttc"]:
-                for result in folder_path.glob(ext):
+            for file in folder_path.iterdir():
+                # Case-insensitive suffix match to capture .TTF, .ttc, .OTF, etc.
+                if file.is_file() and file.suffix.lower() in [".ttf", ".otf", ".ttc"]:
                     font_faces += self.register_font(
-                        result.as_posix(), override, single_stroke
+                        file.as_posix(), override, single_stroke
                     )
 
-        return list(set(font_faces))
+        # Sort the list to guarantee deterministic order for tests
+        return sorted(list(set(font_faces)))
 
     def register_system_fonts(self):
         """Runner to (re)inititalize the OCCT FontMgr font list since user folder is

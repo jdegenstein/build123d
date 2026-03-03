@@ -127,15 +127,6 @@ if label_str:
         label, center_arc, 0.5 - 0.5 * (label.bounding_box().size.X) / center_arc.length
     )
 
-    # p_labels2 = p_labels.faces().sort_by(SortBy.AREA)[1::]
-    # print(len(p_labels2))
-    # for face in p_labels2.faces():
-    # print("sep")
-    # for edge in face.edges():
-    # if edge.length < 0.1:
-    # print(edge.length)
-    # p_labels2.remove(face)
-    # print(len(p_labels2))
     # Turn the projected faces into solids via thickening (embossing).
     embossed_label = [Solid.thicken(f, 0.5) for f in p_labels.faces()]
     bracelet += embossed_label
