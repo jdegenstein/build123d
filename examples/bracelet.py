@@ -114,13 +114,28 @@ bracelet = Solid() + [tip, center_section, tip.mirror(Plane.YZ)]
 # projecting text onto a doubly-curved surface can create many small faces/edges,
 # and thickening them adds even more boolean complexity.
 if label_str:
-    label = Text(label_str, font_size=width * 0.8, align=Align.CENTER)
+    label = Text(
+        label_str,
+        font="outline",
+        font_size=width * 0.8,
+        align=Align.CENTER,
+    )
 
     # Project the text onto the bracelet using a path-based placement along center_arc.
     # The parameter offsets the label so it sits centered along arc-length.
     p_labels = bracelet.project_faces(
         label, center_arc, 0.5 - 0.5 * (label.bounding_box().size.X) / center_arc.length
     )
+
+    # p_labels2 = p_labels.faces().sort_by(SortBy.AREA)[1::]
+    # print(len(p_labels2))
+    # for face in p_labels2.faces():
+    # print("sep")
+    # for edge in face.edges():
+    # if edge.length < 0.1:
+    # print(edge.length)
+    # p_labels2.remove(face)
+    # print(len(p_labels2))
     # Turn the projected faces into solids via thickening (embossing).
     embossed_label = [Solid.thicken(f, 0.5) for f in p_labels.faces()]
     bracelet += embossed_label

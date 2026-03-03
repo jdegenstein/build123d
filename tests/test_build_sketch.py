@@ -386,8 +386,13 @@ class TestBuildSketchObjects(unittest.TestCase):
     def test_text_singleline(self):
         font_size = 10
         singleline = Text("test", font_size, "singleline")
-        self.assertTrue(all([isinstance(s, Face) for s in singleline.get_top_level_shapes()]))
-        self.assertEqual(singleline.single_line_width, font_size * .04)
+        self.assertTrue(
+            all([isinstance(s, Face) for s in singleline.get_top_level_shapes()])
+        )
+        self.assertEqual(singleline.single_line_width, font_size * 0.04)
+        self.assertAlmostEqual(
+            sum(face.area for face in singleline.faces()), 21.168002701007154, 7
+        )
 
         singlelinewidth = Text("test", font_size, "singleline", single_line_width=1)
         self.assertEqual(singlelinewidth.single_line_width, 1)
@@ -397,6 +402,16 @@ class TestBuildSketchObjects(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             Text("the quick brown fox", font_size, "singleline", single_line_width=6)
+
+    def test_text_outline(self):
+        font_size = 10
+        outline = Text("thequickbrownfoxjumpsoverthelazydog", font_size, "outline")
+        self.assertTrue(
+            all([isinstance(s, Face) for s in outline.get_top_level_shapes()])
+        )
+        self.assertAlmostEqual(
+            sum(face.area for face in outline.faces()), 210.37328540139723, 7
+        )
 
     def test_text_exceptions(self):
         with self.assertRaises(ValueError):

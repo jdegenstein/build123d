@@ -12,11 +12,12 @@ desc:
 
 import glob
 import os
+from pathlib import Path
 import platform
 import sys
 from dataclasses import dataclass
 
-from fontTools.ttLib import TTFont, ttCollection  # type:ignore
+from fontTools.ttLib import TTFont, ttCollection  # type: ignore
 from OCP.Font import (
     Font_FA_Bold,
     Font_FA_BoldItalic,
@@ -29,7 +30,6 @@ from OCP.TCollection import TCollection_AsciiString
 from OCP.TColStd import TColStd_SequenceOfHAsciiString
 
 from build123d.build_enums import FontStyle
-
 
 FONT_ASPECT = {
     FontStyle.REGULAR: Font_FA_Regular,
@@ -64,7 +64,12 @@ class FontManager:
             "Relief SingleLine CAD",
             "reliefsingleline/ReliefSingleLineCAD-Regular.ttf",
             True,
-        )
+        ),
+        (
+            "Relief SingleLine Outline",
+            "reliefsingleline/ReliefSingleLineOutline-Regular.otf",
+            False,
+        ),
     ]
 
     def __init__(self):
@@ -85,21 +90,39 @@ class FontManager:
         aliases = [aliases.Value(i).ToCString() for i in range(1, aliases.Length() + 1)]
 
         if "singleline" not in aliases:
-            if platform.system() == "Windows": # pragma: no cover
-                # OCCT doesnt add user fonts on Windows
-                self.register_system_fonts()
-
-            working_path = os.path.dirname(os.path.abspath(__file__))
+            working_path = Path(__file__).resolve().parent
             for font in self.bundled_fonts:
-                font_path = os.path.normpath(
-                    os.path.join(working_path, self.bundled_path, font[1])
+                font_path = (
+                    (working_path / self.bundled_path / font[1]).resolve().as_posix()
                 )
-                self.register_font(font_path, single_stroke=font[2])
+                self.register_font(font_path, override=True, single_stroke=font[2])
+
+                if font[2]:
+                    for aspect in [
+                        Font_FA_Regular,
+                        Font_FA_Bold,
+                        Font_FA_Italic,
+                        Font_FA_BoldItalic,
+                    ]:
+                        f_sys = self.manager.FindFont(
+                            TCollection_AsciiString(font[0]), aspect
+                        )
+                        if f_sys:
+                            f_sys.SetSingleStrokeFont(True)
 
             self.manager.AddFontAlias(
                 TCollection_AsciiString("singleline"),
                 TCollection_AsciiString("Relief SingleLine CAD"),
             )
+
+            self.manager.AddFontAlias(
+                TCollection_AsciiString("outline"),
+                TCollection_AsciiString("Relief SingleLine Outline"),
+            )
+
+            if platform.system() == "Windows":  # pragma: no cover
+                # OCCT doesnt add user fonts on Windows
+                self.register_system_fonts()
 
     def available_fonts(self) -> list[FontInfo]:
         """Get list of available fonts by name and available styles (also called aspects)"""
@@ -135,15 +158,15 @@ class FontManager:
     ) -> list[str]:
         """Register all font faces in a font file and return font face names."""
         _, ext = os.path.splitext(path)
-        if ext.strip(".") == "ttc": # pragma: no cover
+        if ext.strip(".") == "ttc":  # pragma: no cover
             fonts = ttCollection.TTCollection(path)
         else:
             fonts = [TTFont(path)]
 
         font_faces = []
         for font in fonts:
-            fonts = self._get_font_faces(font, path)
-            for f in fonts:
+            system_fonts = self._get_font_faces(font, path)
+            for f in system_fonts:
                 font_faces.append(f.FontName().ToCString())
                 f.SetSingleStrokeFont(single_stroke)
                 self.manager.RegisterFont(f, override)
@@ -154,13 +177,15 @@ class FontManager:
         self, path: str, override: bool = False, single_stroke=False
     ) -> list[str]:
         """Register all fonts in a folder"""
-        exts = ["ttf", "otf", "ttc"]
         font_faces = []
-        for ext in exts:
-            search = os.path.join(os.path.normpath(path), "*" + ext)
-            results = glob.glob(search)
-            for result in results:
-                font_faces += self.register_font(result, override, single_stroke)
+        folder_path = Path(path)
+
+        if folder_path.exists():
+            for ext in ["*.ttf", "*.otf", "*.ttc"]:
+                for result in folder_path.glob(ext):
+                    font_faces += self.register_font(
+                        result.as_posix(), override, single_stroke
+                    )
 
         return list(set(font_faces))
 
@@ -168,18 +193,18 @@ class FontManager:
         """Runner to (re)inititalize the OCCT FontMgr font list since user folder is
         missing on Windows and some fonts may not be imported correctly."""
 
-        if platform.system() == "Windows": # pragma: no cover
-            user = os.getlogin()
+        if platform.system() == "Windows":  # pragma: no cover
+            user_dir = Path.home().as_posix()
             paths = [
                 "C:/Windows/Fonts",
-                f"C:/Users/{user}/AppData/Local/Microsoft/Windows/Fonts",
+                f"{user_dir}/AppData/Local/Microsoft/Windows/Fonts",
             ]
-        elif platform.system() == "Darwin": # pragma: no cover
+        elif platform.system() == "Darwin":  # pragma: no cover
             # macOS
             paths = ["/System/Library/Fonts", "/Library/Fonts"]
         else:
             paths = [
-                "/system/fonts", # Android
+                "/system/fonts",  # Android
                 "/usr/share/fonts",
                 "/usr/local/share/fonts",
             ]
@@ -187,7 +212,9 @@ class FontManager:
         for path in paths:
             self.register_folder(path)
 
-    def _get_font_faces(self, ft_font: TTFont, path: str) -> list[Font_SystemFont]: # pragma: no cover
+    def _get_font_faces(
+        self, ft_font: TTFont, path: str
+    ) -> list[Font_SystemFont]:  # pragma: no cover
         """Extract font info from font files and return list of font object."""
 
         family, sub, preferred = "", "", ""

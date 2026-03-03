@@ -8,22 +8,24 @@ date: February 21 2025
 desc: Unit tests for the build123d examples, ensuring they don't raise.
 """
 
-from pathlib import Path
-
 import os
-import subprocess
 import sys
-import tempfile
-import unittest
+import subprocess
+from pathlib import Path
+import pytest
 
+_root_dir = Path(__file__).resolve().parent.parent
+_examples_dir = _root_dir / "examples"
+_ttt_dir = _root_dir / "docs" / "assets" / "ttt"
 
-_examples_dir = Path(os.path.abspath(os.path.dirname(__file__))).parent / "examples"
-_ttt_dir = Path(os.path.abspath(os.path.dirname(__file__))).parent / "docs/assets/ttt"
+# Collect all example files natively
+example_files = [
+    f
+    for f in list(_examples_dir.iterdir()) + list(_ttt_dir.iterdir())
+    if not f.name.startswith("_") and f.name.endswith(".py")
+]
 
 _MOCK_OCP_VSCODE_CONTENTS = """
-from pathlib import Path
-
-import re
 import sys
 from unittest.mock import Mock
 mock_module = Mock()
@@ -34,54 +36,32 @@ sys.modules["ocp_vscode"] = mock_module
 """
 
 
-def generate_example_test(path: Path):
-    """Generate and return a function to test the example at `path`."""
-    name = path.name
+@pytest.mark.parametrize("path", example_files, ids=lambda x: x.name)
+def test_example(path, tmp_path):
+    """Test that the example executes without raising exceptions."""
+    cwd = tmp_path if "benchy" not in path.name else _examples_dir
 
-    def assert_example_does_not_raise(self):
-        with tempfile.TemporaryDirectory(
-            prefix=f"build123d_test_examples_{name}"
-        ) as tmpdir:
-            # More examples emit output files than read input files,
-            # so default to running with a temporary directory to
-            # avoid cluttering the git working directory.  For
-            # examples that want to read assets from the examples
-            # directory, use that.  If an example is added in the
-            # future that wants to both read assets from the examples
-            # directory and write output files, deal with it then.
-            cwd = tmpdir if "benchy" not in path.name else _examples_dir
-            mock_ocp_vscode = Path(tmpdir) / "_mock_ocp_vscode.py"
-            with open(mock_ocp_vscode, "w", encoding="utf-8") as f:
-                f.write(_MOCK_OCP_VSCODE_CONTENTS)
-            cmd = (
-                f"exec(open(r'{mock_ocp_vscode}', encoding='utf-8').read()); "
-                f"exec(open(r'{path}', encoding='utf-8').read())"
-            )
-            got = subprocess.run(
-                [sys.executable, "-c", cmd],
-                capture_output=True,
-                cwd=cwd,
-                check=False,
-            )
-            self.assertEqual(
-                0, got.returncode, f"stdout/stderr: {got.stdout} / {got.stderr}"
-            )
+    # Write the mock module to the temporary directory
+    mock_file = tmp_path / "ocp_vscode.py"
+    mock_file.write_text(_MOCK_OCP_VSCODE_CONTENTS, encoding="utf-8")
 
-    return assert_example_does_not_raise
+    # Add tmp_path to PYTHONPATH so the mock is naturally imported by the example
+    env = os.environ.copy()
+    env["PYTHONPATH"] = f"{tmp_path}{os.pathsep}{env.get('PYTHONPATH', '')}"
 
-
-class TestExamples(unittest.TestCase):
-    """Tests build123d examples."""
-
-
-for example in sorted(list(_examples_dir.iterdir()) + list(_ttt_dir.iterdir())):
-    if example.name.startswith("_") or not example.name.endswith(".py"):
-        continue
-    setattr(
-        TestExamples,
-        f"test_{example.name.replace('.', '_')}",
-        generate_example_test(example),
+    # 3. Subprocess run with text=True for clean traceback rendering
+    got = subprocess.run(
+        [sys.executable, str(path)],
+        capture_output=True,
+        text=True,
+        cwd=cwd,
+        env=env,
+        check=False,
     )
 
-if __name__ == "__main__":
-    unittest.main()
+    if got.returncode != 0:
+        pytest.fail(
+            f"Example {path.name} failed with exit code {got.returncode}.\n\n"
+            f"--- STDERR ---\n{got.stderr}\n"
+            f"--- STDOUT ---\n{got.stdout}\n"
+        )

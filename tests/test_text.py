@@ -29,7 +29,7 @@ class TestFontManager(unittest.TestCase):
         src_path = Path("src/build123d")
 
         font_name = instance1.bundled_fonts[0][1]
-        font_path = (working_path.parent / src_path / instance1.bundled_path / font_name)
+        font_path = working_path.parent / src_path / instance1.bundled_path / font_name
 
         instance1.register_font(str(font_path))
 
@@ -45,7 +45,9 @@ class TestFontManager(unittest.TestCase):
         src_path = Path("src/build123d")
 
         font_name = manager.bundled_fonts[0][1]
-        font_path = (working_path.parent / src_path / manager.bundled_path / font_name).resolve()
+        font_path = (
+            working_path.parent / src_path / manager.bundled_path / font_name
+        ).resolve()
 
         font_names = manager.register_font(str(font_path))
 
@@ -64,7 +66,9 @@ class TestFontManager(unittest.TestCase):
         font_file = Path(manager.bundled_fonts[0][1])
         font_folder = font_file.parent
 
-        folder_path = (working_path.parent / src_path / manager.bundled_path / font_folder).resolve()
+        folder_path = (
+            working_path.parent / src_path / manager.bundled_path / font_folder
+        ).resolve()
 
         font_names = manager.register_folder(str(folder_path))
 
@@ -82,6 +86,12 @@ class TestFontManager(unittest.TestCase):
             TCollection_AsciiString("singleline"),
             TCollection_AsciiString("Relief SingleLine CAD"),
         )
+
+        manager.manager.RemoveFontAlias(
+            TCollection_AsciiString("outline"),
+            TCollection_AsciiString("Relief SingleLine Outline"),
+        )
+
         manager.manager.ClearFontDataBase()
         manager.register_system_fonts()
 
@@ -99,7 +109,9 @@ class TestFontManager(unittest.TestCase):
         src_path = Path("src/build123d")
 
         font_name = manager.bundled_fonts[0][1]
-        good_path = (working_path.parent / src_path / manager.bundled_path / font_name).resolve()
+        good_path = (
+            working_path.parent / src_path / manager.bundled_path / font_name
+        ).resolve()
 
         good_font = manager.check_font(str(good_path))
         bad_font = manager.check_font(font_name)
