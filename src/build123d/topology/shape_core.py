@@ -2806,10 +2806,10 @@ def topo_distance_to(
     if not all(isinstance(shape, Shape) for shape in sources):
         raise ValueError("Topological distance requires Shape objects")
 
-    valid_sources = tcast(list[Shape], sources)
-    peer_type = valid_sources[0].shape_type
+    first_source = tcast(Shape, sources[0])
+    peer_type = first_source.shape_type
 
-    if any(shape.shape_type != peer_type for shape in valid_sources):
+    if any(tcast(Shape, shape).shape_type != peer_type for shape in sources):
         raise ValueError("Topological distance requires shapes of the same type")
 
     plural_lut = {
